@@ -283,6 +283,14 @@ print(f'SAP: {len(oesap)} catalogue part nos. have a SAP no. ({sum(1 for r in sp
       f'{sum(1 for v in oesap.values() if len(v) > 1)} with several SAP materials; '
       f'{len(cmdsap)} CMD yard nos. linked; {len(saprecs)} other SAP entries '
       f'({", ".join(f"{SAPKINDS[k]}: {sum(1 for s in saprecs if s[0] == k)}" for k in range(5))})')
+# Special entries (frequent orders): tools/specials.json, SAP no. looked up by OE no.
+specials = json.loads((ROOT / 'tools' / 'specials.json').read_text(encoding='utf-8'))
+for s in specials:
+    s['sap'] = list(oesap.get(s['oe'], [])) + [[r[2], r[3]] for r in saprecs if r[1] == s['oe']]
+    saprecs = [r for r in saprecs if r[1] != s['oe']]          # shown by the special entry instead
+    print(f"special: {s['title']} | {s['oe']} | Parker {s['parker']} | SAP {s['sap']}")
+    if not s['sap']:
+        warn.append(f"special entry {s['oe']} has no SAP no.")
 lists[0]['note'] = ('The PDF text does not pair these numbers with the names. The SAP section below '
                     'shows what each number is. Confirm on this PDF page.')
 
@@ -293,7 +301,7 @@ meta = {
 }
 data = {'meta': meta, 'systems': [[s[0], s[1]] for s in SYSTEMS], 'chapters': chapters, 'spc': spc,
         'tools': tools, 'lists': lists, 'pages': pages, 'ygroups': ygroups,
-        'oesap': oesap, 'cmdsap': cmdsap, 'saprecs': saprecs, 'sapkinds': SAPKINDS}
+        'oesap': oesap, 'cmdsap': cmdsap, 'saprecs': saprecs, 'sapkinds': SAPKINDS, 'specials': specials}
 plain = json.dumps(data, ensure_ascii=False, separators=(',', ':')).encode()
 
 # ---------- encrypt ----------
