@@ -18,6 +18,7 @@
   --bg:#f4f6f8; --card:#ffffff; --ink:#0f1720; --muted:#5b6672; --line:#dde3e9;
   --accent:#0b6bcb; --accent-ink:#ffffff; --chip:#eaf1fa; --sap:#0a7a45; --sap-bg:#e6f5ec;
   --warn:#8a4b00; --warn-bg:#fbefdf; --hl:#fff2a8; --err:#b42318;
+  --scrim:rgba(0,0,0,.86);
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark){
@@ -87,6 +88,10 @@ main{padding-block:10px calc(env(safe-area-inset-bottom, 0px) + 24px);max-width:
 .tag.star{background:var(--warn);color:var(--card)}
 .id.parker{background:var(--warn-bg);color:var(--warn)}
 .pinh{font-size:12px;font-weight:650;text-transform:uppercase;letter-spacing:.06em;color:var(--warn);margin:4px 0 8px}
+.photo{display:block;width:100%;max-width:420px;margin-top:8px;padding:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card);cursor:zoom-in}
+.photo img{display:block;width:100%;height:auto}
+#zoom{position:fixed;inset:0;z-index:20;background:var(--scrim);display:flex;align-items:center;justify-content:center;padding:max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));cursor:zoom-out}
+#zoom img{max-width:100%;max-height:100%;border-radius:8px}
 .tag{display:inline-block;font-size:11px;font-weight:650;color:var(--accent-ink);background:var(--accent);border-radius:6px;padding:2px 7px;margin-bottom:6px}
 .ln{font-size:13px;margin-top:4px;word-break:break-word}
 .note{font-size:12px;margin-top:8px;padding:6px 8px;border-radius:8px;background:var(--warn-bg);color:var(--warn)}
@@ -151,6 +156,7 @@ footer{color:var(--muted);font-size:11px;text-align:center;padding-block:8px 30p
   <main id="out"></main>
   <footer id="foot"></footer>
 </div>
+<div id="zoom" hidden><img id="zoomimg" alt=""></div>
 <div id="toast"></div>
 
 <script id="data" type="application/json">/*DATA*/</script>
@@ -221,7 +227,7 @@ for (const r of D.pages)
   rows.push({t:'page', list:LISTS[r[0]], page:r[1], title:r[2], lines:r[3], cmds:r[4], sys:r[5] >= 0 ? SYS[r[5]] : null});
 for (const s of (D.specials || []))
   rows.unshift({t:'special', tag:s.tag, name:s.title, sub:s.subtitle, oe:s.oe, parker:s.parker, label:s.label,
-    details:s.details || [], manual:s.manual, sap:s.sap || [], extra:s.search || ''});
+    details:s.details || [], manual:s.manual, sap:s.sap || [], extra:s.search || '', photo:s.photo || '', cap:s.photo_caption || ''});
 for (const r of (D.saprecs || []))
   rows.push({t:'sap', k:r[0], kind:SAPK[r[0]], mk:r[1], sapno:r[2], name:r[3]});
 
@@ -350,7 +356,8 @@ function card(r, toks, exact){
       '<div class="fields">' +
         field('Label', '<b>' + h(r.label) + '</b>') +
         field('Filter', r.details.map(d => '<div>' + h(d) + '</div>').join('')) +
-        field('Manual', '<span class="sub">' + h(r.manual) + '</span>') +
+        field('Manual', '<span class="sub">' + h(r.manual) + '</span>' +
+          (r.photo ? '<button class="photo" data-zoom="1" aria-label="Enlarge box label photo"><img src="' + r.photo + '" alt="' + esc(r.cap) + '"></button>' : '')) +
       '</div>' +
       sapSection(r.sap, toks) +
     '</div>';
@@ -421,6 +428,8 @@ $clr.addEventListener('click', () => { $q.value = ''; render(); $q.focus(); });
 document.querySelectorAll('.filters button').forEach(b => b.addEventListener('click', () => { setFilter(b.dataset.f); shown = 50; render(); }));
 $out.addEventListener('click', e => {
   if (e.target.id === 'more'){ shown += 100; render(); return; }
+  const z = e.target.closest('[data-zoom]');
+  if (z){ const im = z.querySelector('img'); $('zoomimg').src = im.src; $('zoomimg').alt = im.alt; $('zoom').hidden = false; return; }
   const ex = e.target.closest('[data-ex]');
   if (ex){ $q.value = ex.dataset.ex; shown = 50; render(); return; }
   const g = e.target.closest('[data-goto]');
@@ -431,6 +440,7 @@ $out.addEventListener('click', e => {
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(done, () => fallback(v, done));
   else fallback(v, done);
 });
+$('zoom').addEventListener('click', () => { $('zoom').hidden = true; });
 $('foot').addEventListener('click', e => {
   if (e.target.id === 'forget'){ save(KEYNAME, null); toast('Access code forgotten'); setTimeout(() => location.reload(), 600); }
 });

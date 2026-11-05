@@ -288,6 +288,8 @@ specials = json.loads((ROOT / 'tools' / 'specials.json').read_text(encoding='utf
 for s in specials:
     s['sap'] = list(oesap.get(s['oe'], [])) + [[r[2], r[3]] for r in saprecs if r[1] == s['oe']]
     saprecs = [r for r in saprecs if r[1] != s['oe']]          # shown by the special entry instead
+    if s.get('photo'):                                          # kept inside the encrypted data
+        s['photo'] = 'data:image/jpeg;base64,' + base64.b64encode((ROOT / 'tools' / s['photo']).read_bytes()).decode()
     print(f"special: {s['title']} | {s['oe']} | Parker {s['parker']} | SAP {s['sap']}")
     if not s['sap']:
         warn.append(f"special entry {s['oe']} has no SAP no.")
