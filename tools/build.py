@@ -9,6 +9,8 @@ Usage:
   YARD_tools_50043150.md          YARD_lists_index.md
   YARD_50043149.md                YARD_50043149_spares_by_page.md
   YARD_50043141.md                YARD_50043141_accessories_spares_tools_OCR.md
+  sap/SAP_XREF_OE_full.tsv        from artifact "Al Reef SAP Reference Files", files/xref/ (OE no. -> SAP no.)
+  sap/SAP_XREF_other_maker_nos.tsv  same artifact (CMD / WinGD ID / maker no. -> SAP no.)
   pages/p*.txt                    page maps made from "Split - 100 pages/text" SPC files:
                                   "=== <PDF page> | <printed page>" then the OE numbers on that page
 
@@ -240,13 +242,58 @@ for p in pages:
                 ygroups.update(re.findall(r'(?<![\d.])(\d{4})(?=-\d|\s|;|$)', l[6:]))
 ygroups = sorted(ygroups & {c[0][:4] for c in chapters})
 
+# ---------- SAP material numbers (plant 81N3 equipment BOM, cross-referenced 5 Nov 2026) ----------
+# sap/SAP_XREF_OE_full.tsv: OE part no. -> SAP material no. + SAP description
+# sap/SAP_XREF_other_maker_nos.tsv: CMD yard no., WinGD ID no., maker no. -> SAP material no. + description
+# Only the SAP number and SAP description are used (no equipment or stock).
+import csv
+SAPKINDS = ['OE no. not in the X72DF-2.1 catalogue', 'CMD yard no.', 'WinGD sensor / ID no.',
+            'Maker / sub-supplier no.', 'No maker no. in SAP']
+oesap, cmdsap, saprecs = {}, {}, []
+app_oe = {r[2] for r in spc}
+app_cmd = {t[1] for t in tools if t[1]} | {n for p in pages for n in p[4]}
+
+def sap_rows(name):
+    with open(RAW / 'sap' / name, encoding='utf-8', newline='') as fh:
+        for row in csv.DictReader(fh, delimiter='\t'):
+            sap, desc = row['SAP material no.'].strip(), row['SAP description'].strip()
+            if not re.fullmatch(r'1200\d{8}', sap):
+                warn.append(f'odd SAP no. in {name}: {sap}')
+                continue
+            yield row, sap, desc
+
+for row, sap, desc in sap_rows('SAP_XREF_OE_full.tsv'):
+    oe = row['OE part no.'].strip()
+    if oe in app_oe:
+        lst = oesap.setdefault(oe, [])
+        if [sap, desc] not in lst:
+            lst.append([sap, desc])
+    else:
+        saprecs.append([0, oe, sap, desc])
+for row, sap, desc in sap_rows('SAP_XREF_other_maker_nos.tsv'):
+    mk, kind = row['Maker part no. (SAP)'].strip(), row['Kind'].strip()
+    if kind.startswith('CMD') and mk in app_cmd:
+        lst = cmdsap.setdefault(mk, [])
+        if [sap, desc] not in lst:
+            lst.append([sap, desc])
+        continue
+    k = {'CMD yard no.': 1, 'WinGD ID no.': 2, 'maker no.': 3}.get(kind, 4)
+    saprecs.append([k, mk if k != 4 else '', sap, desc])
+print(f'SAP: {len(oesap)} catalogue part nos. have a SAP no. ({sum(1 for r in spc if r[2] in oesap)} of {len(spc)} rows), '
+      f'{sum(1 for v in oesap.values() if len(v) > 1)} with several SAP materials; '
+      f'{len(cmdsap)} CMD yard nos. linked; {len(saprecs)} other SAP entries '
+      f'({", ".join(f"{SAPKINDS[k]}: {sum(1 for s in saprecs if s[0] == k)}" for k in range(5))})')
+lists[0]['note'] = ('The PDF text does not pair these numbers with the names. The SAP name next to each number '
+                    'shows what it is. Confirm on this PDF page.')
+
 meta = {
     'source': 'WinGD X72DF-2.1 Spare Parts Catalogue (Issue 001, 2022-08); CMD/Jiangnan lists 50043150 (tools), 50043149 (engine spares), 50043141 (accessories). Copied from the "00 Claude indexes" Drive folder.',
     'built': datetime.date.today().isoformat(),
     'counts': {'spc': len(spc), 'tools': len(tools), 'pages': len(pages)},
 }
 data = {'meta': meta, 'systems': [[s[0], s[1]] for s in SYSTEMS], 'chapters': chapters, 'spc': spc,
-        'tools': tools, 'lists': lists, 'pages': pages, 'ygroups': ygroups}
+        'tools': tools, 'lists': lists, 'pages': pages, 'ygroups': ygroups,
+        'oesap': oesap, 'cmdsap': cmdsap, 'saprecs': saprecs, 'sapkinds': SAPKINDS}
 plain = json.dumps(data, ensure_ascii=False, separators=(',', ':')).encode()
 
 # ---------- encrypt ----------

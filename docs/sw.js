@@ -1,5 +1,5 @@
 // Offline cache. Bump VERSION when data changes so phones fetch the new list.
-const VERSION = 'xdf-parts-30e11b6b49';
+const VERSION = 'xdf-parts-26b0aade40';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));

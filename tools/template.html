@@ -76,6 +76,10 @@ main{padding-block:10px calc(env(safe-area-inset-bottom, 0px) + 24px);max-width:
 .fv{min-width:0;word-break:break-word}
 .sub{color:var(--muted);font-size:12px}
 .card.exact{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.cmds{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.cmdrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.cmdd{flex:1 1 100%;font-size:13px;min-width:0;word-break:break-word}
+.fv .note{margin-top:6px}
 .tag{display:inline-block;font-size:11px;font-weight:650;color:var(--accent-ink);background:var(--accent);border-radius:6px;padding:2px 7px;margin-bottom:6px}
 .ln{font-size:13px;margin-top:4px;word-break:break-word}
 .note{font-size:12px;margin-top:8px;padding:6px 8px;border-radius:8px;background:var(--warn-bg);color:var(--warn)}
@@ -126,13 +130,14 @@ footer{color:var(--muted);font-size:11px;text-align:center;padding-block:8px 30p
     <h1>XDF Parts Finder <small id="count"></small></h1>
     <div class="search">
       <input id="q" type="search" inputmode="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-        placeholder="Name, OE no., CMD/SAP no., group…" aria-label="Search parts">
+        placeholder="Name, OE no., SAP no., CMD no., group…" aria-label="Search parts">
       <button class="clear" id="clr" aria-label="Clear search" hidden>×</button>
     </div>
     <div class="filters" role="group" aria-label="Source">
       <button data-f="all" aria-pressed="true">All</button>
-      <button data-f="spc" aria-pressed="false">WinGD (OE no.)</button>
-      <button data-f="yard" aria-pressed="false">Yard (CMD/SAP no.)</button>
+      <button data-f="spc" aria-pressed="false">WinGD (OE)</button>
+      <button data-f="yard" aria-pressed="false">Yard (CMD)</button>
+      <button data-f="sap" aria-pressed="false">Other SAP</button>
     </div>
     <div id="status" aria-live="polite"></div>
   </header>
@@ -197,31 +202,46 @@ $('app').hidden = false;
 // spc:   [chapterIdx, pos, oe, qty, level, name, remark, kg, assembly, pdfPage, printedPage]
 // tools: [groupItem, cmd, drawing, description, qty, kg, page]
 // pages: [listIdx, page, title, [lines], [cmd numbers], systemIdx or -1]
+// oesap / cmdsap: {OE or CMD no.: [[SAP no., SAP description], ...]}   saprecs: [kindIdx, maker no., SAP no., SAP description]
 const CH = D.chapters, LISTS = D.lists, SYS = D.systems || [], rows = [];
+const OESAP = D.oesap || {}, CMDSAP = D.cmdsap || {}, SAPK = D.sapkinds || [];
 for (const r of D.spc){ const c = CH[r[0]];
   rows.push({t:'spc', grp:c[0], title:c[1], sys:SYS[c[3]], pdfR:[c[4], c[5]], catR:[c[6], c[7]],
-    pos:r[1], oe:r[2], qty:r[3], lvl:r[4], name:r[5], rem:r[6], kg:r[7], asm:r[8], pdf:r[9], pg:r[10]}); }
+    pos:r[1], oe:r[2], qty:r[3], lvl:r[4], name:r[5], rem:r[6], kg:r[7], asm:r[8], pdf:r[9], pg:r[10], sap:OESAP[r[2]] || []}); }
 for (const r of D.tools)
-  rows.push({t:'tool', gi:r[0], cmd:r[1], dwg:r[2], name:r[3], qty:r[4], kg:r[5], page:r[6]});
+  rows.push({t:'tool', gi:r[0], cmd:r[1], dwg:r[2], name:r[3], qty:r[4], kg:r[5], page:r[6], sap:CMDSAP[r[1]] || []});
 for (const r of D.pages)
   rows.push({t:'page', list:LISTS[r[0]], page:r[1], title:r[2], lines:r[3], cmds:r[4], sys:r[5] >= 0 ? SYS[r[5]] : null});
+for (const r of (D.saprecs || []))
+  rows.push({t:'sap', k:r[0], kind:SAPK[r[0]], mk:r[1], sapno:r[2], name:r[3]});
 
 const norm = s => String(s == null ? '' : s).toLowerCase();
 const squash = s => norm(s).replace(/[^a-z0-9一-鿿]/g, '');
 const yardGroups = new Set(D.ygroups || []);
+const sapTxt = l => l.map(s => s[0] + ' ' + s[1]).join(' ');
+function hasSap(r, n){
+  if (r.sapno) return r.sapno === n;
+  if (r.sap && r.sap.some(s => s[0] === n)) return true;
+  return !!(r.cmds && r.cmds.some(c => (CMDSAP[c] || []).some(s => s[0] === n)));
+}
 for (const r of rows){
   let parts;
-  if (r.t === 'spc') parts = [r.oe, r.name, r.rem, r.asm, r.grp, r.title, r.pos, r.sys ? r.sys[1] : ''];
-  else if (r.t === 'tool') parts = [r.cmd, r.dwg, r.name, r.gi, 'tool tools 50043150'];
-  else parts = [r.title, r.lines.join(' '), r.cmds.join(' '), r.list.id];
+  if (r.t === 'spc') parts = [r.oe, r.name, r.rem, r.asm, r.grp, r.title, r.pos, r.sys ? r.sys[1] : '', sapTxt(r.sap)];
+  else if (r.t === 'tool') parts = [r.cmd, r.dwg, r.name, r.gi, 'tool tools 50043150', sapTxt(r.sap)];
+  else if (r.t === 'page') parts = [r.title, r.lines.join(' '), r.cmds.join(' '), r.list.id, r.cmds.map(n => sapTxt(CMDSAP[n] || [])).join(' ')];
+  else parts = [r.mk, r.sapno, r.name, r.kind];
   r.hay = norm(parts.join(' | '));
   r.hayS = squash(parts.join(''));
 }
 $('count').textContent = rows.length.toLocaleString() + ' entries';
-$('foot').innerHTML = esc(D.meta.source) + '<br>Data built ' + esc(D.meta.built) +
+$('foot').innerHTML = esc(D.meta.source) +
+  (D.oesap ? '<br>SAP material numbers: plant 81N3 equipment BOM, loaded on ME1. The same SAP no. applies to ME2 (both 5X72DF-2.1).' : '') +
+  '<br>Data built ' + esc(D.meta.built) +
   '. Always confirm a number on the catalogue or list page before ordering.' +
   '<br><button class="link" id="forget">Forget access code on this device</button>';
 
+const exPart = rows.find(r => r.t === 'spc' && r.sap.length === 1 && r.grp === '5556') || rows.find(r => r.t === 'spc' && r.sap.length === 1);
+const EXAMPLES = (exPart ? [exPart.oe, exPart.sap[0][0]] : []).concat(['fuel pump seal', 'o-ring 2124', 'exhaust valve', 'torque spanner']);
 let filter = 'all', shown = 50;
 const $q = $('q'), $out = $('out'), $st = $('status'), $clr = $('clr');
 
@@ -237,7 +257,8 @@ function search(q){
   const res = [];
   for (const r of rows){
     if (filter === 'spc' && r.t !== 'spc') continue;
-    if (filter === 'yard' && r.t === 'spc') continue;
+    if (filter === 'yard' && r.t !== 'tool' && r.t !== 'page') continue;
+    if (filter === 'sap' && r.t !== 'sap') continue;
     let ok = true, score = 0;
     for (const t of toks){
       const st = squash(t);
@@ -247,6 +268,7 @@ function search(q){
       else { ok = false; break; }
       if (r.oe && squash(r.oe) === st) score += 60;
       if (r.cmd === t || (r.cmds && r.cmds.indexOf(t) >= 0)) score += 60;
+      if (hasSap(r, t) || (r.mk && squash(r.mk) === st)) score += 60;
       if ((r.grp && r.grp === t) || (r.gi && r.gi.indexOf(t) === 0)) score += 6;
       if (r.name && norm(r.name).indexOf(t) >= 0) score += 2;
     }
@@ -260,6 +282,15 @@ function chip(label, value, cls, toks){
 }
 function field(label, html){ return '<div class="fl">' + label + '</div><div class="fv">' + html + '</div>'; }
 function sysName(s){ return s ? '<b>' + esc(s[1]) + '</b> <span class="sub">(chapter ' + s[0] + ')</span>' : ''; }
+const NOSAP = 'Not on the 81N3 equipment BOM. Search SAP (MM60 / Fiori) with the part no. and name.';
+const brk = s => s.replace(/,/g, ',<wbr>');
+function sapChips(list, toks){ return list.map(s => chip('SAP material no.', s[0], 'sap', toks)).join(''); }
+function sapField(list, toks){
+  if (!list.length) return field('SAP', '<span class="sub">' + NOSAP + '</span>');
+  if (list.length === 1) return field('SAP name', brk(hl(list[0][1], toks)));
+  return field('SAP names', list.map(s => '<div><b>' + hl(s[0], toks) + '</b> ' + brk(hl(s[1], toks)) + '</div>').join('') +
+    '<div class="note">SAP has ' + list.length + ' materials on this part no. Check in SAP before raising the PR.</div>');
+}
 function card(r, toks, exact){
   const h = t => hl(t, toks);
   const top = '<div class="card' + (exact ? ' exact' : '') + '">' + (exact ? '<div class="tag">Exact match</div>' : '');
@@ -270,34 +301,49 @@ function card(r, toks, exact){
     return top + '<div class="src">WinGD X72DF-2.1 spare parts catalogue</div>' +
       '<div class="name">' + h(r.name) + '</div>' +
       (r.rem ? '<div class="rem">' + h(r.rem) + '</div>' : '') +
-      '<div class="ids">' + chip('OE part no.', r.oe, '', toks) + '</div>' +
+      '<div class="ids">' + chip('OE part no.', r.oe, '', toks) + sapChips(r.sap, toks) + '</div>' +
       '<div class="fields">' +
+        sapField(r.sap, toks) +
         field('System', sysName(r.sys) + '<br>Group <b>' + h(r.grp) + '</b> ' + h(r.title)) +
         field('Manual', page) +
         (r.asm ? field('Assembly', h(r.asm)) : '') +
         field('Item', 'Pos <b>' + esc(r.pos) + '</b> · Qty <b>' + esc(r.qty) + '</b>' + (r.lvl ? ' · ' + esc(r.lvl) : '') + (r.kg ? ' · ' + esc(r.kg) : '')) +
       '</div>' +
-      (yardGroups.has(r.grp.slice(0, 4)) ? '<button class="link" data-goto="' + esc(r.grp.slice(0, 4)) + '">CMD / SAP numbers for group ' + esc(r.grp.slice(0, 4)) + ' →</button>' : '') +
+      (yardGroups.has(r.grp.slice(0, 4)) ? '<button class="link" data-goto="' + esc(r.grp.slice(0, 4)) + '">Yard CMD numbers for group ' + esc(r.grp.slice(0, 4)) + ' →</button>' : '') +
     '</div>';
   }
   if (r.t === 'tool'){
     return top + '<div class="src">CMD / Jiangnan yard list 50043150 · tools</div>' +
       '<div class="name">' + h(r.name || '(no name printed)') + '</div>' +
-      '<div class="ids">' + (r.cmd ? chip('CMD / SAP material no.', r.cmd, 'sap', toks) : '') +
+      '<div class="ids">' + (r.cmd ? chip('CMD yard no.', r.cmd, '', toks) : '') + sapChips(r.sap, toks) +
         (r.dwg ? chip('Drawing no.', r.dwg, '', toks) : '') + '</div>' +
       (r.cmd ? '' : '<div class="rem">No CMD number printed for this line.</div>') +
       '<div class="fields">' +
+        (r.cmd ? sapField(r.sap, toks) : '') +
         field('System', '<b>Engine tools</b> <span class="sub">(group ' + h(r.gi.slice(0, 4)) + ')</span>') +
         field('Manual', 'List of Tools 50043150, page <b>' + esc(r.page) + '</b>') +
         field('Item', 'Group item <b>' + h(r.gi) + '</b>' + (r.qty ? ' · Qty <b>' + esc(r.qty) + '</b>' : '') + (r.kg ? ' · ' + esc(r.kg) + ' kg' : '')) +
       '</div>' +
     '</div>';
   }
+  if (r.t === 'sap'){
+    const lbl = ['OE part no.', 'CMD yard no.', 'WinGD ID no.', 'Maker no.', ''][r.k] || 'Maker no.';
+    return top + '<div class="src">SAP plant 81N3 · ' + esc(r.kind) + '</div>' +
+      '<div class="name">' + brk(h(r.name)) + '</div>' +
+      '<div class="ids">' + (r.mk ? chip(lbl, r.mk, '', toks) : '') + chip('SAP material no.', r.sapno, 'sap', toks) + '</div>' +
+      (r.k === 0 ? '<div class="fields">' + field('Manual', '<span class="sub">This OE no. is not in the X72DF-2.1 Spare Parts Catalogue.</span>') + '</div>' : '') +
+    '</div>';
+  }
   const hit = toks.length ? r.lines.filter(l => toks.some(t => norm(l).indexOf(t) >= 0)) : [];
   const lines = (hit.length ? hit : r.lines).slice(0, 8);
+  const cmdRows = r.cmds.map(n => {
+    const s = CMDSAP[n] || [];
+    return '<div class="cmdrow">' + chip('CMD yard no.', n, '', toks) + sapChips(s, toks) +
+      '<div class="cmdd' + (s.length ? '' : ' sub') + '">' + (s.length ? s.map(x => brk(hl(x[1], toks))).join('<br>') : NOSAP) + '</div></div>';
+  }).join('');
   return top + '<div class="src">' + esc(r.list.name) + '</div>' +
     '<div class="name">' + h(r.title) + '</div>' +
-    (r.cmds.length ? '<div class="ids">' + r.cmds.map(n => chip('CMD / SAP no.', n, 'sap', toks)).join('') + '</div>' : '') +
+    (cmdRows ? '<div class="cmds">' + cmdRows + '</div>' : '') +
     '<div class="fields">' +
       field('System', r.sys ? sysName(r.sys) + '<br>' + h(r.title) : h(r.title)) +
       field('Manual', 'List ' + esc(r.list.id) + ', PDF page <b>' + esc(r.page) + '</b>') +
@@ -314,8 +360,8 @@ function render(){
   if (q.length < 2){
     $st.textContent = '';
     $out.innerHTML = '<div class="empty"><p><b>Search ' + rows.length.toLocaleString() + ' parts, tools and yard list pages.</b></p>' +
-      '<p class="tip">Type a name, an OE number, a CMD/SAP number or a group. Try one of these:</p><div class="ex">' +
-      ['OE-55-AJU-DKE-GUQ', 'fuel pump seal', 'o-ring 2124', 'exhaust valve', '50000349', 'torque spanner'].map(x =>
+      '<p class="tip">Type a name, an OE no., a SAP no., a CMD no. or a group. Try one of these:</p><div class="ex">' +
+      EXAMPLES.map(x =>
         '<button data-ex="' + esc(x) + '">' + esc(x) + '</button>').join('') +
       '</div><p class="tip">Words can be in any order. Tap a number to copy it.</p></div>';
     return;
@@ -327,7 +373,8 @@ function render(){
     return;
   }
   const qs = squash(q), qt = q.trim();
-  const isExact = r => (r.oe && squash(r.oe) === qs) || r.cmd === qt || (r.cmds && r.cmds.indexOf(qt) >= 0);
+  const isExact = r => (r.oe && squash(r.oe) === qs) || r.cmd === qt || (r.cmds && r.cmds.indexOf(qt) >= 0) ||
+    hasSap(r, qt) || (r.mk && squash(r.mk) === qs);
   let html = res.slice(0, shown).map(r => card(r, toks, isExact(r))).join('');
   if (res.length > shown) html += '<button class="more" id="more">Show more (' + (res.length - shown).toLocaleString() + ' left)</button>';
   $out.innerHTML = html;
