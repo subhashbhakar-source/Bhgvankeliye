@@ -76,9 +76,12 @@ main{padding-block:10px calc(env(safe-area-inset-bottom, 0px) + 24px);max-width:
 .fv{min-width:0;word-break:break-word}
 .sub{color:var(--muted);font-size:12px}
 .card.exact{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
-.cmds{display:flex;flex-direction:column;gap:10px;margin-top:8px}
-.cmdrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.cmdd{flex:1 1 100%;font-size:13px;min-width:0;word-break:break-word}
+.sapsec{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
+.saph{font-size:11px;font-weight:650;text-transform:uppercase;letter-spacing:.06em;color:var(--sap);margin-bottom:2px}
+.saprow{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-top:6px}
+.sapn{flex:1 1 170px;min-width:0;font-size:14px;word-break:break-word}
+.cmdl{font:600 13px/1.2 ui-monospace,"SF Mono",Menlo,monospace;color:var(--muted)}
+.sapsec .note{margin-top:8px}
 .fv .note{margin-top:6px}
 .tag{display:inline-block;font-size:11px;font-weight:650;color:var(--accent-ink);background:var(--accent);border-radius:6px;padding:2px 7px;margin-bottom:6px}
 .ln{font-size:13px;margin-top:4px;word-break:break-word}
@@ -284,12 +287,16 @@ function field(label, html){ return '<div class="fl">' + label + '</div><div cla
 function sysName(s){ return s ? '<b>' + esc(s[1]) + '</b> <span class="sub">(chapter ' + s[0] + ')</span>' : ''; }
 const NOSAP = 'Not on the 81N3 equipment BOM. Search SAP (MM60 / Fiori) with the part no. and name.';
 const brk = s => s.replace(/,/g, ',<wbr>');
-function sapChips(list, toks){ return list.map(s => chip('SAP material no.', s[0], 'sap', toks)).join(''); }
-function sapField(list, toks){
-  if (!list.length) return field('SAP', '<span class="sub">' + NOSAP + '</span>');
-  if (list.length === 1) return field('SAP name', brk(hl(list[0][1], toks)));
-  return field('SAP names', list.map(s => '<div><b>' + hl(s[0], toks) + '</b> ' + brk(hl(s[1], toks)) + '</div>').join('') +
-    '<div class="note">SAP has ' + list.length + ' materials on this part no. Check in SAP before raising the PR.</div>');
+function sapRow(s, toks, pre){
+  return '<div class="saprow">' + (pre || '') + chip('SAP material no.', s[0], 'sap', toks) + '<div class="sapn">' + brk(hl(s[1], toks)) + '</div></div>';
+}
+function sapSection(list, toks){
+  return '<div class="sapsec"><div class="saph">SAP · plant 81N3</div>' +
+    (list.length
+      ? list.map(s => sapRow(s, toks)).join('') +
+        (list.length > 1 ? '<div class="note">SAP has ' + list.length + ' materials on this part no. Check in SAP before raising the PR.</div>' : '')
+      : '<div class="sub">' + NOSAP + '</div>') +
+  '</div>';
 }
 function card(r, toks, exact){
   const h = t => hl(t, toks);
@@ -301,49 +308,47 @@ function card(r, toks, exact){
     return top + '<div class="src">WinGD X72DF-2.1 spare parts catalogue</div>' +
       '<div class="name">' + h(r.name) + '</div>' +
       (r.rem ? '<div class="rem">' + h(r.rem) + '</div>' : '') +
-      '<div class="ids">' + chip('OE part no.', r.oe, '', toks) + sapChips(r.sap, toks) + '</div>' +
+      '<div class="ids">' + chip('OE part no.', r.oe, '', toks) + '</div>' +
       '<div class="fields">' +
-        sapField(r.sap, toks) +
         field('System', sysName(r.sys) + '<br>Group <b>' + h(r.grp) + '</b> ' + h(r.title)) +
         field('Manual', page) +
         (r.asm ? field('Assembly', h(r.asm)) : '') +
         field('Item', 'Pos <b>' + esc(r.pos) + '</b> · Qty <b>' + esc(r.qty) + '</b>' + (r.lvl ? ' · ' + esc(r.lvl) : '') + (r.kg ? ' · ' + esc(r.kg) : '')) +
       '</div>' +
       (yardGroups.has(r.grp.slice(0, 4)) ? '<button class="link" data-goto="' + esc(r.grp.slice(0, 4)) + '">Yard CMD numbers for group ' + esc(r.grp.slice(0, 4)) + ' →</button>' : '') +
+      sapSection(r.sap, toks) +
     '</div>';
   }
   if (r.t === 'tool'){
     return top + '<div class="src">CMD / Jiangnan yard list 50043150 · tools</div>' +
       '<div class="name">' + h(r.name || '(no name printed)') + '</div>' +
-      '<div class="ids">' + (r.cmd ? chip('CMD yard no.', r.cmd, '', toks) : '') + sapChips(r.sap, toks) +
-        (r.dwg ? chip('Drawing no.', r.dwg, '', toks) : '') + '</div>' +
+      '<div class="ids">' + (r.cmd ? chip('CMD yard no.', r.cmd, '', toks) : '') + (r.dwg ? chip('Drawing no.', r.dwg, '', toks) : '') + '</div>' +
       (r.cmd ? '' : '<div class="rem">No CMD number printed for this line.</div>') +
       '<div class="fields">' +
-        (r.cmd ? sapField(r.sap, toks) : '') +
         field('System', '<b>Engine tools</b> <span class="sub">(group ' + h(r.gi.slice(0, 4)) + ')</span>') +
         field('Manual', 'List of Tools 50043150, page <b>' + esc(r.page) + '</b>') +
         field('Item', 'Group item <b>' + h(r.gi) + '</b>' + (r.qty ? ' · Qty <b>' + esc(r.qty) + '</b>' : '') + (r.kg ? ' · ' + esc(r.kg) + ' kg' : '')) +
       '</div>' +
+      (r.cmd ? sapSection(r.sap, toks) : '') +
     '</div>';
   }
   if (r.t === 'sap'){
     const lbl = ['OE part no.', 'CMD yard no.', 'WinGD ID no.', 'Maker no.', ''][r.k] || 'Maker no.';
-    return top + '<div class="src">SAP plant 81N3 · ' + esc(r.kind) + '</div>' +
-      '<div class="name">' + brk(h(r.name)) + '</div>' +
-      '<div class="ids">' + (r.mk ? chip(lbl, r.mk, '', toks) : '') + chip('SAP material no.', r.sapno, 'sap', toks) + '</div>' +
+    return top + '<div class="src">' + esc(r.kind) + '</div>' +
+      (r.mk ? '<div class="ids">' + chip(lbl, r.mk, '', toks) + '</div>' : '') +
       (r.k === 0 ? '<div class="fields">' + field('Manual', '<span class="sub">This OE no. is not in the X72DF-2.1 Spare Parts Catalogue.</span>') + '</div>' : '') +
+      sapSection([[r.sapno, r.name]], toks) +
     '</div>';
   }
   const hit = toks.length ? r.lines.filter(l => toks.some(t => norm(l).indexOf(t) >= 0)) : [];
   const lines = (hit.length ? hit : r.lines).slice(0, 8);
-  const cmdRows = r.cmds.map(n => {
-    const s = CMDSAP[n] || [];
-    return '<div class="cmdrow">' + chip('CMD yard no.', n, '', toks) + sapChips(s, toks) +
-      '<div class="cmdd' + (s.length ? '' : ' sub') + '">' + (s.length ? s.map(x => brk(hl(x[1], toks))).join('<br>') : NOSAP) + '</div></div>';
+  const sapRows = r.cmds.map(n => {
+    const s = CMDSAP[n] || [], pre = '<span class="cmdl">CMD ' + hl(n, toks) + '</span>';
+    return s.length ? s.map(x => sapRow(x, toks, pre)).join('') : '<div class="saprow">' + pre + '<span class="sub">Not on the 81N3 equipment BOM</span></div>';
   }).join('');
   return top + '<div class="src">' + esc(r.list.name) + '</div>' +
     '<div class="name">' + h(r.title) + '</div>' +
-    (cmdRows ? '<div class="cmds">' + cmdRows + '</div>' : '') +
+    (r.cmds.length ? '<div class="ids">' + r.cmds.map(n => chip('CMD yard no.', n, '', toks)).join('') + '</div>' : '') +
     '<div class="fields">' +
       field('System', r.sys ? sysName(r.sys) + '<br>' + h(r.title) : h(r.title)) +
       field('Manual', 'List ' + esc(r.list.id) + ', PDF page <b>' + esc(r.page) + '</b>') +
@@ -352,6 +357,7 @@ function card(r, toks, exact){
     '<div class="note">' + esc(r.list.note) + '</div>' +
     (r.lines.length > lines.length ? '<details><summary>All text on this page (' + r.lines.length + ' lines)</summary>' +
       r.lines.map(l => '<div class="ln">' + h(l) + '</div>').join('') + '</details>' : '') +
+    (sapRows ? '<div class="sapsec"><div class="saph">SAP · plant 81N3</div>' + sapRows + '</div>' : '') +
   '</div>';
 }
 function render(){

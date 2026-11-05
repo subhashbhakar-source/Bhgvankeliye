@@ -283,8 +283,8 @@ print(f'SAP: {len(oesap)} catalogue part nos. have a SAP no. ({sum(1 for r in sp
       f'{sum(1 for v in oesap.values() if len(v) > 1)} with several SAP materials; '
       f'{len(cmdsap)} CMD yard nos. linked; {len(saprecs)} other SAP entries '
       f'({", ".join(f"{SAPKINDS[k]}: {sum(1 for s in saprecs if s[0] == k)}" for k in range(5))})')
-lists[0]['note'] = ('The PDF text does not pair these numbers with the names. The SAP name next to each number '
-                    'shows what it is. Confirm on this PDF page.')
+lists[0]['note'] = ('The PDF text does not pair these numbers with the names. The SAP section below '
+                    'shows what each number is. Confirm on this PDF page.')
 
 meta = {
     'source': 'WinGD X72DF-2.1 Spare Parts Catalogue (Issue 001, 2022-08); CMD/Jiangnan lists 50043150 (tools), 50043149 (engine spares), 50043141 (accessories). Copied from the "00 Claude indexes" Drive folder.',
