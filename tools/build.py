@@ -1,24 +1,39 @@
 #!/usr/bin/env python3
-"""Build app/index.html from the Drive index files (markdown) in a raw folder.
+"""Build the XDF Parts Finder PWA (docs/) from the Drive index files.
 
-Usage: python3 tools/build.py <raw_dir>
-Raw files: SPC_01.md .. SPC_12.md, YARD_tools_50043150.md, YARD_50043149.md, YARD_50043141.md
+Usage:
+  XDF_CODE='abcd efgh ijkl mnop' python3 tools/build.py <raw_dir>
+
+<raw_dir> holds copies of the "00 Claude indexes" files from Google Drive:
+  SPC_01.md .. SPC_12.md          SPC_index_by_group (NN of 12 ...).md
+  YARD_tools_50043150.md          YARD_lists_index.md
+  YARD_50043149.md                YARD_50043149_spares_by_page.md
+  YARD_50043141.md                YARD_50043141_accessories_spares_tools_OCR.md
+
+The parts data is gzip-compressed and encrypted (AES-256-GCM, key from the
+access code via PBKDF2-SHA256) so the published site is unreadable without the
+code. Never commit the raw files or the code.
 """
-import datetime, hashlib, json, re, sys
+import base64, datetime, gzip, hashlib, json, os, re, secrets, shutil, sys
 from pathlib import Path
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 ROOT = Path(__file__).resolve().parent.parent
 RAW = Path(sys.argv[1])
+OUT = ROOT / 'docs'
+ITER = 310000
 
 def unesc(s):
-    return re.sub(r'\\([\\`*_{}\[\]()#+\-.!|~<>=])', r'\1', s)
+    return re.sub(r'\\([\\`*_{}\[\]()#+\-.!|~<>=&])', r'\1', s)
 
 def lines(p):
     return [unesc(l.rstrip()) for l in p.read_text(encoding='utf-8').splitlines()]
 
-# ---------- WinGD SPC ----------
-chapters, spc, problems = [], [], []
-row_re = re.compile(r'^\s*(\d{3}[A-Z]?)\s*\|\s*(OE-[A-Z0-9-]+|\S+)\s*\|(.*)$')
+warn = []
+
+# ---------- WinGD Spare Parts Catalogue ----------
+chapters, spc = [], []
+row_re = re.compile(r'^\s*(\d{3}[A-Z]?)\s*\|\s*([^|]+?)\s*\|(.*)$')
 for i in range(1, 13):
     p = RAW / f'SPC_{i:02d}.md'
     cur, asm = None, ''
@@ -28,83 +43,163 @@ for i in range(1, 13):
             chapters.append([m.group(1), m.group(2).strip(), ''])
             cur, asm = len(chapters) - 1, ''
             continue
-        if l.startswith('Location:') and cur is not None:
+        if cur is None:
+            continue
+        if l.startswith('Location:'):
             chapters[cur][2] = l[len('Location:'):].strip()
             continue
         m = re.match(r'^\s*\[(.*)\]\s*$', l)
-        if m and cur is not None:
+        if m:
             asm = m.group(1).strip()
             continue
         m = row_re.match(l)
-        if m and cur is not None:
+        if m:
             pos, oe, rest = m.group(1), m.group(2), m.group(3)
             f = [x.strip() for x in rest.split('|')]
-            qty = f[0] if f else ''
+            qty = f[0]
             lvl = f[1] if len(f) > 1 and re.fullmatch(r'L\d+', f[1]) else ''
             body = f[2:] if lvl else f[1:]
-            kg = ''
-            if body and re.search(r'\bkg$', body[-1]):
-                kg = body.pop()
+            kg = body.pop() if body and re.search(r'\bkg$', body[-1]) else ''
             name = body[0] if body else ''
             rem = ' | '.join(body[1:])
+            if oe.startswith('OE-') and oe[3:5] != chapters[cur][0][:2]:
+                warn.append(f'group/OE mismatch: {chapters[cur][0]} {pos} {oe}')
+            if not re.fullmatch(r'OE-\d\d-[A-Z]{3}-[A-Z]{3}-[A-Z]{3}', oe):
+                warn.append(f'odd part no.: {chapters[cur][0]} {pos} {oe}')
             spc.append([cur, pos, oe, qty, lvl, name, rem, kg, asm])
         elif re.match(r'^\s*\d{3}\s*\|', l):
-            problems.append(('SPC', p.name, l))
+            warn.append(f'unparsed SPC row in {p.name}: {l}')
 
-# ---------- Yard tools list 50043150 (row per item) ----------
-yard = []
-TOOLS = 'CMD list 50043150 (tools)'
+# ---------- CMD tools list 50043150 (one row per item) ----------
+tools = []
 for l in lines(RAW / 'YARD_tools_50043150.md'):
+    if l.startswith('##'):
+        print('tools file heading:', l)
     if re.match(r'^\d{4}-\d{2}\s*\|', l):
         f = [x.strip() for x in l.split('|')]
         if len(f) < 7:
-            problems.append(('TOOLS', '', l)); continue
-        gi, cmd, dwg, desc, qty, kg, page = f[0], f[1], f[2], ' | '.join(f[3:-3]), f[-3], f[-2], f[-1]
-        yard.append([TOOLS, gi, cmd, dwg, desc, qty, kg, page.lstrip('p')])
+            warn.append(f'unparsed tools row: {l}')
+            continue
+        tools.append([f[0], f[1], f[2], ' | '.join(x for x in f[3:-3] if x), f[-3], f[-2], f[-1].lstrip('p')])
 
-# ---------- Yard spares 50043149 (per page, numbers not paired) ----------
-SP = 'CMD list 50043149 (engine spares) - numbers on this page are not paired with names; open the page'
-def per_page(path, label):
-    out, cur = [], None
-    for l in lines(path):
-        m = re.match(r'^##\s+p(\d+)\s*(.*)$', l)
-        if m:
-            cur = {'page': m.group(1), 'title': m.group(2).strip(), 'f': {}}
-            out.append(cur); continue
-        m = re.match(r'^\s*([^:]{2,40}):\s*(.*)$', l)
-        if cur is not None and m:
-            cur['f'][m.group(1).strip()] = m.group(2).strip()
-    recs = []
-    for c in out:
-        f = c['f']
-        cmd = next((v for k, v in f.items() if 'material' in k.lower() or k.lower().startswith('cmd')), '')
-        cmds = ', '.join(re.findall(r'\b5\d{7}\b', cmd)) or ', '.join(re.findall(r'\b5\d{7}\b', ' '.join(f.values())))
-        items = f.get('items', '')
-        names = f.get('names', '')
-        extra = '; '.join(f'{k}: {v}' for k, v in f.items() if k not in ('items', 'names') and v and v != cmd)
-        desc = c['title'] + (' - ' + names if names else '') + (' | items: ' + items if items else '') + (' | ' + extra if extra else '')
-        gi = ' '.join(sorted(set(re.findall(r'\b\d{4}(?:-\d+)?\b', items))))
-        recs.append([label, gi, cmds, '', desc, '', '', c['page']])
-    return recs
+DOCNOS = {'50043141', '50043149', '50043150'}
+def cmds_in(text):
+    seen = []
+    for n in re.findall(r'(?<!\d)5\d{7}(?!\d)', text):
+        if n not in DOCNOS and n not in seen:
+            seen.append(n)
+    return seen
 
-yard += per_page(RAW / 'YARD_50043149.md', SP)
-p41 = RAW / 'YARD_50043141.md'
-if p41.exists():
-    yard += per_page(p41, 'CMD list 50043141 (accessories spares & tools, OCR - verify on page)')
+lists = [
+    {'id': '50043149', 'name': 'CMD 50043149 engine spares',
+     'note': 'On these pages the numbers are not paired with the names. Open this page of the PDF to see which number belongs to which item.'},
+    {'id': '50043141', 'name': 'CMD 50043141 accessories spares & tools (OCR)',
+     'note': 'Text read by OCR from scanned tables, so small slips are possible. Confirm on this PDF page.'},
+]
+pages = []
+
+# ---------- CMD engine spares 50043149 (summary per PDF page) ----------
+cur = None
+for l in lines(RAW / 'YARD_50043149.md'):
+    m = re.match(r'^##\s+p(\d+)\s*(.*)$', l)
+    if m:
+        cur = [0, m.group(1), m.group(2).strip(), [], []]
+        pages.append(cur)
+        continue
+    if cur is None or not l.strip():
+        continue
+    s = l.strip()
+    if re.match(r'^CMD material', s, re.I):
+        cur[4] += [n for n in cmds_in(s) if n not in cur[4]]
+    else:
+        cur[3].append(s)
+        cur[4] += [n for n in cmds_in(s) if n not in cur[4]]
+
+# ---------- CMD accessories 50043141 (OCR text per PDF page) ----------
+BOILER = ('List of Spare parts and Tools for Accessories', 'CMD-WinGD 5X72DF-2.1 |',
+          'Shanghai CSSC-MES DIESEL', '上海中船三井柴油机有限公司')
+cur = None
+for l in lines(RAW / 'YARD_50043141.md'):
+    m = re.match(r'^===\s*PDF page (\d+)\s*===', l)
+    if m:
+        n = int(m.group(1))
+        cur = None if n <= 2 else [1, str(n), '', [], []]
+        if cur:
+            pages.append(cur)
+        continue
+    if cur is None or not l.strip() or l.strip().startswith(BOILER):
+        continue
+    s = l.strip()
+    if not cur[2] and re.match(r'^(Spare parts|Tools|Spare part)', s, re.I):
+        cur[2] = s
+    cur[3].append(s)
+    cur[4] += [n for n in cmds_in(s) if n not in cur[4]]
+for p in pages:
+    if not p[2]:
+        p[2] = p[3][0] if p[3] else ''
+
+# WinGD groups that the yard lists name as group items (for the "CMD / SAP numbers for group" link)
+ygroups = {t[0][:4] for t in tools}
+for p in pages:
+    if p[0] == 0:
+        for l in p[3]:
+            if l.startswith('items:'):
+                ygroups.update(re.findall(r'(?<![\d.])(\d{4})(?=-\d|\s|;|$)', l[6:]))
+ygroups = sorted(ygroups & {c[0][:4] for c in chapters})
 
 meta = {
-    'source': 'WinGD X72DF-2.1 Spare Parts Catalogue (Issue 001 2022-08) and CMD/Jiangnan yard lists 50043149, 50043150, 50043141, from the "00 Claude indexes" Drive folder',
+    'source': 'WinGD X72DF-2.1 Spare Parts Catalogue (Issue 001, 2022-08); CMD/Jiangnan lists 50043150 (tools), 50043149 (engine spares), 50043141 (accessories). Copied from the "00 Claude indexes" Drive folder.',
     'built': datetime.date.today().isoformat(),
+    'counts': {'spc': len(spc), 'tools': len(tools), 'pages': len(pages)},
 }
-data = {'meta': meta, 'chapters': chapters, 'spc': spc, 'yard': yard}
-js = json.dumps(data, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
-html = (ROOT / 'tools' / 'template.html').read_text(encoding='utf-8').replace('/*DATA*/', js)
-(ROOT / 'app' / 'index.html').write_text(html, encoding='utf-8')
-ver = hashlib.sha1(html.encode()).hexdigest()[:10]
-sw = (ROOT / 'tools' / 'sw.template.js').read_text().replace('__VERSION__', ver)
-(ROOT / 'app' / 'sw.js').write_text(sw)
+data = {'meta': meta, 'chapters': chapters, 'spc': spc, 'tools': tools, 'lists': lists, 'pages': pages, 'ygroups': ygroups}
+plain = json.dumps(data, ensure_ascii=False, separators=(',', ':')).encode()
 
-print(f'chapters={len(chapters)} spc_rows={len(spc)} yard_rows={len(yard)} html={len(html)//1024} KB ver={ver}')
-for pr in problems[:30]:
-    print('UNPARSED', pr)
-print('unparsed total', len(problems))
+# ---------- encrypt ----------
+code = re.sub(r'[^a-z0-9]', '', os.environ.get('XDF_CODE', '').lower())
+if len(code) < 12:
+    sys.exit('Set XDF_CODE to the access code (at least 12 letters/digits).')
+salt = base64.b64decode((ROOT / 'tools' / 'salt.txt').read_text().strip())
+key = hashlib.pbkdf2_hmac('sha256', code.encode(), salt, ITER, 32)
+iv = secrets.token_bytes(12)
+ct = AESGCM(key).encrypt(iv, gzip.compress(plain, 9, mtime=0), None)
+enc = {'v': 1, 'iter': ITER, 'salt': base64.b64encode(salt).decode(),
+       'iv': base64.b64encode(iv).decode(), 'ct': base64.b64encode(ct).decode()}
+
+OUT.mkdir(exist_ok=True)
+html = (ROOT / 'tools' / 'template.html').read_text(encoding='utf-8').replace('/*DATA*/', json.dumps(enc))
+(OUT / 'index.html').write_text(html, encoding='utf-8')
+for f in ('manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png'):
+    shutil.copy(ROOT / 'app' / f, OUT / f)
+ver = hashlib.sha1(html.encode()).hexdigest()[:10]
+(OUT / 'sw.js').write_text((ROOT / 'tools' / 'sw.template.js').read_text().replace('__VERSION__', ver))
+(OUT / '.nojekyll').write_text('')
+
+if os.environ.get('XDF_ARTIFACT'):
+    # Same page for a private claude.ai artifact: the host adds the document skeleton and
+    # safe-area padding, and has no service worker, manifest or home-screen icon.
+    keep = []
+    for l in html.splitlines():
+        s = l.strip()
+        if s.lower() in ('<!doctype html>', '<html lang="en">', '<head>', '</head>', '<body>', '</body>', '</html>'):
+            continue
+        if re.match(r'<meta (charset|name="(viewport|theme-color|apple-[^"]*|mobile-web-app-capable)")', s) or \
+           re.match(r'<link rel="(manifest|apple-touch-icon)"', s):
+            continue
+        keep.append(l)
+        if s.startswith('<title>'):
+            keep.append('<meta name="claude:viewport-fit-sides" content="cover">')
+    art = '\n'.join(keep) + '\n'
+    art = art.replace('</style>',
+        'header{top:env(safe-area-inset-top, 0px);padding-block:10px 8px}\n'
+        'body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top, 0px);z-index:10;background:var(--bg)}\n'
+        '</style>', 1)
+    Path(os.environ['XDF_ARTIFACT']).write_text(art, encoding='utf-8')
+
+if os.environ.get('XDF_DUMP'):
+    Path(os.environ['XDF_DUMP']).write_bytes(plain)
+print(f'chapters={len(chapters)} spc={len(spc)} tools={len(tools)} pages={len(pages)} '
+      f'plain={len(plain)//1024}KB html={len(html)//1024}KB ver={ver}')
+for w in warn[:40]:
+    print('WARN', w)
+print('warnings:', len(warn))

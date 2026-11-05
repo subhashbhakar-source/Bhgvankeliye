@@ -6,6 +6,7 @@
 <title>XDF Parts Finder</title>
 <meta name="description" content="Offline search of WinGD X72DF-2.1 spare parts: OE part numbers, names and CMD/SAP material numbers.">
 <meta name="theme-color" content="#0f1720">
+<meta name="robots" content="noindex, nofollow">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,218 +17,333 @@
 :root{
   --bg:#f4f6f8; --card:#ffffff; --ink:#0f1720; --muted:#5b6672; --line:#dde3e9;
   --accent:#0b6bcb; --accent-ink:#ffffff; --chip:#eaf1fa; --sap:#0a7a45; --sap-bg:#e6f5ec;
-  --yard:#8a4b00; --yard-bg:#fbefdf; --hl:#fff2a8;
+  --warn:#8a4b00; --warn-bg:#fbefdf; --hl:#fff2a8; --err:#b42318;
+  color-scheme: light;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#0f1720; --card:#17212c; --ink:#e8edf2; --muted:#93a1af; --line:#263342;
     --accent:#4ea3ff; --accent-ink:#06121f; --chip:#1d2b3a; --sap:#5fd49a; --sap-bg:#123326;
-    --yard:#ffb866; --yard-bg:#3a2a14; --hl:#5c4d00;
+    --warn:#ffb866; --warn-bg:#3a2a14; --hl:#5c4d00; --err:#ff8a80;
+    color-scheme: dark;
   }
 }
 :root[data-theme="dark"]{
   --bg:#0f1720; --card:#17212c; --ink:#e8edf2; --muted:#93a1af; --line:#263342;
   --accent:#4ea3ff; --accent-ink:#06121f; --chip:#1d2b3a; --sap:#5fd49a; --sap-bg:#123326;
-  --yard:#ffb866; --yard-bg:#3a2a14; --hl:#5c4d00;
+  --warn:#ffb866; --warn-bg:#3a2a14; --hl:#5c4d00; --err:#ff8a80;
+  color-scheme: dark;
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--ink);
   font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
   -webkit-text-size-adjust:100%}
+[hidden]{display:none !important}
+#app,#lock{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
 header{position:sticky;top:0;z-index:5;background:var(--bg);
-  padding:calc(env(safe-area-inset-top) + 10px) 16px 8px;border-bottom:1px solid var(--line)}
-h1{font-size:17px;margin:0 0 8px;font-weight:650;display:flex;justify-content:space-between;align-items:baseline}
+  padding-block:calc(env(safe-area-inset-top, 0px) + 10px) 8px;border-bottom:1px solid var(--line)}
+h1{font-size:17px;margin:0 0 8px;font-weight:650;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 h1 small{font-weight:400;color:var(--muted);font-size:12px}
 .search{position:relative}
+input{font:inherit}
 .search input{width:100%;font-size:17px;padding:12px 40px 12px 14px;border-radius:12px;
-  border:1px solid var(--line);background:var(--card);color:var(--ink);outline:none;-webkit-appearance:none}
+  border:1px solid var(--line);background:var(--card);color:var(--ink);outline:none;-webkit-appearance:none;appearance:none}
 .search input:focus{border-color:var(--accent)}
+.search input::-webkit-search-cancel-button,.search input::-webkit-search-decoration{-webkit-appearance:none;appearance:none;display:none}
 .clear{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;
-  color:var(--muted);font-size:22px;width:34px;height:34px;display:none}
+  color:var(--muted);font-size:22px;width:34px;height:34px}
 .filters{display:flex;gap:6px;margin-top:8px;overflow-x:auto;scrollbar-width:none}
 .filters::-webkit-scrollbar{display:none}
 .filters button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);
   border-radius:999px;padding:6px 12px;font-size:14px}
 .filters button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
 #status{font-size:12px;color:var(--muted);margin-top:6px;min-height:16px}
-main{padding:10px 16px calc(env(safe-area-inset-bottom) + 24px)}
+main{padding-block:10px calc(env(safe-area-inset-bottom, 0px) + 24px);max-width:760px;margin:0 auto}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 12px 10px;margin-bottom:10px}
+.src{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
 .name{font-weight:650;font-size:16px;word-break:break-word}
 .rem{color:var(--muted);font-size:13px;margin-top:2px;word-break:break-word}
 .ids{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .id{font:600 14px/1.2 ui-monospace,"SF Mono",Menlo,monospace;padding:6px 9px;border-radius:8px;
-  background:var(--chip);border:0;color:var(--ink);text-align:left}
+  background:var(--chip);border:0;color:var(--ink);text-align:left;cursor:pointer}
 .id.sap{background:var(--sap-bg);color:var(--sap)}
-.id.yard{background:var(--yard-bg);color:var(--yard)}
-.id .lbl{display:block;font:500 10px/1.2 -apple-system,sans-serif;opacity:.75;letter-spacing:.02em;text-transform:uppercase}
+.id .lbl{display:block;font:500 10px/1.2 -apple-system,BlinkMacSystemFont,sans-serif;opacity:.8;letter-spacing:.02em;text-transform:uppercase;margin-bottom:2px}
 .meta{margin-top:8px;font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 12px}
-.meta b{color:var(--ink);font-weight:550}
-.grp{font-size:13px;margin-top:6px;color:var(--ink)}
-.grp a{color:var(--accent);text-decoration:none}
+.meta b{color:var(--ink);font-weight:600}
+.grp{font-size:13px;margin-top:6px;word-break:break-word}
+.ln{font-size:13px;margin-top:4px;word-break:break-word}
+.note{font-size:12px;margin-top:8px;padding:6px 8px;border-radius:8px;background:var(--warn-bg);color:var(--warn)}
+.link{border:0;background:none;color:var(--accent);font-size:13px;padding:6px 0 0;cursor:pointer;text-align:left}
+details{margin-top:6px;font-size:13px}
+details summary{color:var(--accent);cursor:pointer}
+details .ln{color:var(--muted)}
 mark{background:var(--hl);color:inherit;border-radius:3px}
-.empty{color:var(--muted);text-align:center;padding:40px 10px}
+.empty{color:var(--muted);text-align:center;padding:36px 10px}
 .empty p{margin:6px 0}
 .tip{font-size:13px}
+.ex{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0}
+.ex button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 12px;font-size:14px}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .more{display:block;width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);
   background:var(--card);color:var(--accent);font-size:15px}
 #toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 20px);transform:translateX(-50%);
   background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:999px;font-size:14px;opacity:0;
-  transition:opacity .2s;pointer-events:none}
+  transition:opacity .2s;pointer-events:none;z-index:9}
 #toast.on{opacity:1}
-footer{color:var(--muted);font-size:11px;text-align:center;padding:8px 16px 30px}
+footer{color:var(--muted);font-size:11px;text-align:center;padding-block:8px 30px;max-width:760px;margin:0 auto}
+#lock{padding-block:18vh 24px}
+.lockbox{width:100%;max-width:380px;margin:0 auto}
+.lockbox h1{font-size:22px;display:block}
+.lockbox p{color:var(--muted);font-size:15px}
+.lockbox input{width:100%;font-size:18px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);
+  background:var(--card);color:var(--ink);letter-spacing:.06em;-webkit-appearance:none;appearance:none}
+.lockbox button{width:100%;margin-top:10px;font-size:17px;padding:12px;border-radius:12px;border:0;
+  background:var(--accent);color:var(--accent-ink);font-weight:600}
+.lockbox .err{color:var(--err);min-height:20px}
 </style>
 </head>
 <body>
-<header>
-  <h1>XDF Parts Finder <small id="count"></small></h1>
-  <div class="search">
-    <input id="q" type="search" inputmode="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-      placeholder="Name, OE no., SAP/CMD no., group…" aria-label="Search parts">
-    <button class="clear" id="clr" aria-label="Clear">×</button>
+<div id="lock" hidden>
+  <div class="lockbox">
+    <h1>XDF Parts Finder</h1>
+    <p>Enter your access code. You only need to do this once on each device.</p>
+    <form id="lockform">
+      <input id="code" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"
+        placeholder="xxxx xxxx xxxx xxxx" aria-label="Access code">
+      <button type="submit">Unlock</button>
+    </form>
+    <p id="lockmsg" class="err" role="alert"></p>
   </div>
-  <div class="filters" role="group" aria-label="Source">
-    <button data-f="all" aria-pressed="true">All</button>
-    <button data-f="spc" aria-pressed="false">WinGD SPC (OE no.)</button>
-    <button data-f="yard" aria-pressed="false">Yard / CMD (SAP)</button>
-  </div>
-  <div id="status"></div>
-</header>
-<main id="out"></main>
-<footer id="foot"></footer>
+</div>
+<div id="app" hidden>
+  <header>
+    <h1>XDF Parts Finder <small id="count"></small></h1>
+    <div class="search">
+      <input id="q" type="search" inputmode="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+        placeholder="Name, OE no., CMD/SAP no., group…" aria-label="Search parts">
+      <button class="clear" id="clr" aria-label="Clear search" hidden>×</button>
+    </div>
+    <div class="filters" role="group" aria-label="Source">
+      <button data-f="all" aria-pressed="true">All</button>
+      <button data-f="spc" aria-pressed="false">WinGD (OE no.)</button>
+      <button data-f="yard" aria-pressed="false">Yard (CMD/SAP no.)</button>
+    </div>
+    <div id="status" aria-live="polite"></div>
+  </header>
+  <main id="out"></main>
+  <footer id="foot"></footer>
+</div>
 <div id="toast"></div>
 
 <script id="data" type="application/json">/*DATA*/</script>
 <script>
-(function(){
+(async function(){
 "use strict";
-const D = JSON.parse(document.getElementById('data').textContent);
-// D.chapters: [group, title, location]   D.spc: [chapterIdx, pos, oe, qty, level, name, remark, kg, assembly]
-// D.yard: [list, groupItem, cmd, drawing, desc, qty, kg, page]
-const CH = D.chapters;
-const rows = [];
-for (const r of D.spc){
-  const c = CH[r[0]];
-  rows.push({src:'spc', grp:c[0], title:c[1], loc:c[2], pos:r[1], oe:r[2], qty:r[3], lvl:r[4], name:r[5], rem:r[6], kg:r[7], asm:r[8]});
+const ENC = JSON.parse(document.getElementById('data').textContent);
+const KEYNAME = 'xdf-parts-key-v1';
+const $ = id => document.getElementById(id);
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const toB64 = u8 => btoa(String.fromCharCode.apply(null, Array.from(u8)));
+function save(k, v){ try{ v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); }catch(_){} }
+function load(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
+
+async function deriveRaw(code){
+  const norm = code.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(norm), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({name:'PBKDF2', salt:b64(ENC.salt), iterations:ENC.iter, hash:'SHA-256'}, base, 256);
+  return new Uint8Array(bits);
 }
-for (const r of D.yard){
-  rows.push({src:'yard', list:r[0], gi:r[1], cmd:r[2], dwg:r[3], name:r[4], qty:r[5], kg:r[6], page:r[7]});
+async function decrypt(raw){
+  const key = await crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['decrypt']);
+  const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:b64(ENC.iv)}, key, b64(ENC.ct));
+  const stream = new Blob([pt]).stream().pipeThrough(new DecompressionStream('gzip'));
+  return JSON.parse(await new Response(stream).text());
 }
-const norm = s => (s||'').toLowerCase();
-const squash = s => norm(s).replace(/[^a-z0-9一-鿿]/g,'');
+function unlock(){
+  return new Promise(resolve => {
+    $('lock').hidden = false;
+    const msg = t => { $('lockmsg').textContent = t; };
+    if (!window.crypto || !crypto.subtle) msg('Open this page from its https:// address.');
+    else if (typeof DecompressionStream === 'undefined') msg('Please update iOS (16.4 or newer is needed).');
+    $('lockform').addEventListener('submit', async e => {
+      e.preventDefault();
+      msg('Checking…');
+      try {
+        const raw = await deriveRaw($('code').value);
+        const d = await decrypt(raw);
+        save(KEYNAME, toB64(raw));
+        $('lock').hidden = true;
+        resolve(d);
+      } catch(_) { msg('That code did not work. Check it and try again.'); }
+    });
+  });
+}
+
+let D = null;
+const saved = load(KEYNAME);
+if (saved){ try { D = await decrypt(b64(saved)); } catch(_) { save(KEYNAME, null); } }
+if (!D) D = await unlock();
+$('app').hidden = false;
+
+// ---------- data ----------
+// chapters: [group, title, location]
+// spc:   [chapterIdx, pos, oe, qty, level, name, remark, kg, assembly]
+// tools: [groupItem, cmd, drawing, description, qty, kg, page]
+// pages: [listIdx, page, title, [lines], [cmd numbers]]
+const CH = D.chapters, LISTS = D.lists, rows = [];
+for (const r of D.spc){ const c = CH[r[0]];
+  rows.push({t:'spc', grp:c[0], title:c[1], loc:c[2], pos:r[1], oe:r[2], qty:r[3], lvl:r[4], name:r[5], rem:r[6], kg:r[7], asm:r[8]}); }
+for (const r of D.tools)
+  rows.push({t:'tool', gi:r[0], cmd:r[1], dwg:r[2], name:r[3], qty:r[4], kg:r[5], page:r[6]});
+for (const r of D.pages)
+  rows.push({t:'page', list:LISTS[r[0]], page:r[1], title:r[2], lines:r[3], cmds:r[4]});
+
+const norm = s => String(s == null ? '' : s).toLowerCase();
+const squash = s => norm(s).replace(/[^a-z0-9一-鿿]/g, '');
+const yardGroups = new Set(D.ygroups || []);
 for (const r of rows){
-  const parts = r.src==='spc'
-    ? [r.oe, r.name, r.rem, r.asm, r.grp, r.title, 'grp'+r.grp, r.pos]
-    : [r.cmd, r.dwg, r.name, r.gi, r.list, (r.gi||'').split('-')[0]];
+  let parts;
+  if (r.t === 'spc') parts = [r.oe, r.name, r.rem, r.asm, r.grp, r.title, r.pos];
+  else if (r.t === 'tool') parts = [r.cmd, r.dwg, r.name, r.gi, 'tool tools 50043150'];
+  else parts = [r.title, r.lines.join(' '), r.cmds.join(' '), r.list.id];
   r.hay = norm(parts.join(' | '));
   r.hayS = squash(parts.join(''));
 }
-document.getElementById('count').textContent = rows.length.toLocaleString() + ' items';
-document.getElementById('foot').innerHTML =
-  'Data: ' + esc(D.meta.source) + '<br>Built ' + esc(D.meta.built) +
-  '. Always confirm on the catalogue page before ordering.';
+$('count').textContent = rows.length.toLocaleString() + ' entries';
+$('foot').innerHTML = esc(D.meta.source) + '<br>Data built ' + esc(D.meta.built) +
+  '. Always confirm a number on the catalogue or list page before ordering.' +
+  '<br><button class="link" id="forget">Forget access code on this device</button>';
 
-let filter = 'all', shown = 60, lastQ = null;
-const $q = document.getElementById('q'), $out = document.getElementById('out'),
-      $st = document.getElementById('status'), $clr = document.getElementById('clr');
+let filter = 'all', shown = 50;
+const $q = $('q'), $out = $('out'), $st = $('status'), $clr = $('clr');
 
-function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 function hl(text, toks){
-  let s = esc(text);
+  const s = esc(text);
   if (!toks.length) return s;
-  const re = new RegExp('(' + toks.map(t=>t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|') + ')','gi');
-  return s.replace(re,'<mark>$1</mark>');
+  const re = new RegExp('(' + toks.map(t => esc(t).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'gi');
+  return s.replace(re, '<mark>$1</mark>');
 }
 function search(q){
   const toks = norm(q).split(/\s+/).filter(Boolean);
   const res = [];
   for (const r of rows){
-    if (filter!=='all' && r.src!==filter) continue;
+    if (filter === 'spc' && r.t !== 'spc') continue;
+    if (filter === 'yard' && r.t === 'spc') continue;
     let ok = true, score = 0;
     for (const t of toks){
       const st = squash(t);
       const i = r.hay.indexOf(t);
-      if (i>=0){ score += (i===0?3:1); }
-      else if (st.length>=3 && r.hayS.indexOf(st)>=0){ score += 2; }
+      if (i >= 0) score += (i === 0 ? 3 : 1);
+      else if (st.length >= 3 && r.hayS.indexOf(st) >= 0) score += 2;
       else { ok = false; break; }
-      // exact id match boost
-      if (r.oe && squash(r.oe)===st) score += 50;
-      if (r.cmd && r.cmd===t) score += 50;
-      if (r.grp && r.grp===t) score += 5;
+      if (r.oe && squash(r.oe) === st) score += 60;
+      if (r.cmd === t || (r.cmds && r.cmds.indexOf(t) >= 0)) score += 60;
+      if ((r.grp && r.grp === t) || (r.gi && r.gi.indexOf(t) === 0)) score += 6;
+      if (r.name && norm(r.name).indexOf(t) >= 0) score += 2;
     }
     if (ok) res.push([score, r]);
   }
-  res.sort((a,b)=>b[0]-a[0]);
-  return {toks, res: res.map(x=>x[1])};
+  res.sort((a, b) => b[0] - a[0]);
+  return {toks, res: res.map(x => x[1])};
+}
+function chip(label, value, cls, toks){
+  return '<button class="id' + (cls ? ' ' + cls : '') + '" data-copy="' + esc(value) + '"><span class="lbl">' + label + '</span>' + hl(value, toks) + '</button>';
 }
 function card(r, toks){
   const h = t => hl(t, toks);
-  if (r.src==='spc'){
-    return '<div class="card">' +
+  if (r.t === 'spc'){
+    return '<div class="card"><div class="src">WinGD spare parts catalogue</div>' +
       '<div class="name">' + h(r.name) + '</div>' +
       (r.rem ? '<div class="rem">' + h(r.rem) + '</div>' : '') +
-      '<div class="ids"><button class="id" data-copy="'+esc(r.oe)+'"><span class="lbl">OE part no.</span>' + h(r.oe) + '</button></div>' +
-      '<div class="grp">Group <b>' + h(r.grp) + '</b> · ' + h(r.title) + (r.asm ? ' · <span style="color:var(--muted)">[' + h(r.asm) + ']</span>' : '') + '</div>' +
+      '<div class="ids">' + chip('OE part no.', r.oe, '', toks) + '</div>' +
+      '<div class="grp">Group <b>' + h(r.grp) + '</b> ' + h(r.title) + (r.asm ? ' <span class="rem">[' + h(r.asm) + ']</span>' : '') + '</div>' +
       '<div class="meta"><span>Pos <b>' + esc(r.pos) + '</b></span><span>Qty <b>' + esc(r.qty) + '</b></span>' +
-        (r.lvl?'<span>' + esc(r.lvl) + '</span>':'') + (r.kg?'<span>' + esc(r.kg) + '</span>':'') + '</div>' +
+        (r.lvl ? '<span>' + esc(r.lvl) + '</span>' : '') + (r.kg ? '<span>' + esc(r.kg) + '</span>' : '') + '</div>' +
       '<div class="meta"><span>' + esc(r.loc) + '</span></div>' +
+      (yardGroups.has(r.grp.slice(0, 4)) ? '<button class="link" data-goto="' + esc(r.grp.slice(0, 4)) + '">CMD / SAP numbers for group ' + esc(r.grp.slice(0, 4)) + ' →</button>' : '') +
     '</div>';
   }
-  return '<div class="card">' +
-    '<div class="name">' + h(r.name) + '</div>' +
-    '<div class="ids">' +
-      (r.cmd ? '<button class="id sap" data-copy="'+esc(r.cmd)+'"><span class="lbl">CMD / SAP material</span>' + h(r.cmd) + '</button>' : '<span class="id yard"><span class="lbl">CMD / SAP material</span>not printed</span>') +
-      (r.dwg ? '<button class="id" data-copy="'+esc(r.dwg)+'"><span class="lbl">Drawing no.</span>' + h(r.dwg) + '</button>' : '') +
-    '</div>' +
-    '<div class="grp">' + (r.gi ? 'Group item <b>' + h(r.gi) + '</b> · ' : '') + esc(r.list) + '</div>' +
-    '<div class="meta">' + (r.qty?'<span>Qty <b>' + esc(r.qty) + '</b></span>':'') + (r.kg?'<span>' + esc(r.kg) + ' kg</span>':'') +
-      (r.page?'<span>List page ' + esc(r.page) + '</span>':'') + '</div>' +
+  if (r.t === 'tool'){
+    return '<div class="card"><div class="src">CMD list 50043150 · tools</div>' +
+      '<div class="name">' + h(r.name || '(no name printed)') + '</div>' +
+      '<div class="ids">' + (r.cmd ? chip('CMD / SAP material no.', r.cmd, 'sap', toks) : '') +
+        (r.dwg ? chip('Drawing no.', r.dwg, '', toks) : '') + '</div>' +
+      (r.cmd ? '' : '<div class="rem">No CMD number printed for this line.</div>') +
+      '<div class="meta"><span>Group item <b>' + h(r.gi) + '</b></span>' + (r.qty ? '<span>Qty <b>' + esc(r.qty) + '</b></span>' : '') +
+        (r.kg ? '<span>' + esc(r.kg) + ' kg</span>' : '') + (r.page ? '<span>List page ' + esc(r.page) + '</span>' : '') + '</div>' +
+    '</div>';
+  }
+  const hit = toks.length ? r.lines.filter(l => toks.some(t => norm(l).indexOf(t) >= 0)) : [];
+  const lines = (hit.length ? hit : r.lines).slice(0, 8);
+  return '<div class="card"><div class="src">' + esc(r.list.name) + ' · PDF page ' + esc(r.page) + '</div>' +
+    '<div class="name">' + h(r.title) + '</div>' +
+    (r.cmds.length ? '<div class="ids">' + r.cmds.map(n => chip('CMD / SAP no.', n, 'sap', toks)).join('') + '</div>' : '') +
+    lines.map(l => '<div class="ln">' + h(l) + '</div>').join('') +
+    '<div class="note">' + esc(r.list.note) + '</div>' +
+    (r.lines.length > lines.length ? '<details><summary>All text on this page (' + r.lines.length + ' lines)</summary>' +
+      r.lines.map(l => '<div class="ln">' + h(l) + '</div>').join('') + '</details>' : '') +
   '</div>';
 }
 function render(){
   const q = $q.value.trim();
-  $clr.style.display = q ? 'block' : 'none';
+  $clr.hidden = !q;
   if (q.length < 2){
     $st.textContent = '';
-    $out.innerHTML = '<div class="empty"><p><b>Type at least 2 characters.</b></p>' +
-      '<p class="tip">Examples: <i>o-ring 2124</i>, <i>OE-96-AXV</i>, <i>5000332</i>, <i>fuel pump seal</i>, <i>exhaust valve</i></p>' +
-      '<p class="tip">Tap a number to copy it.</p></div>';
+    $out.innerHTML = '<div class="empty"><p><b>Search ' + rows.length.toLocaleString() + ' parts, tools and yard list pages.</b></p>' +
+      '<p class="tip">Type a name, an OE number, a CMD/SAP number or a group. Try one of these:</p><div class="ex">' +
+      ['fuel pump seal', 'o-ring 2124', 'exhaust valve', 'OE-55-AAL', '50000349', 'torque spanner'].map(x =>
+        '<button data-ex="' + esc(x) + '">' + esc(x) + '</button>').join('') +
+      '</div><p class="tip">Words can be in any order. Tap a number to copy it.</p></div>';
     return;
   }
   const {toks, res} = search(q);
-  $st.textContent = res.length.toLocaleString() + ' match' + (res.length===1?'':'es');
-  if (!res.length){ $out.innerHTML = '<div class="empty"><p>No match.</p><p class="tip">Try fewer words, or part of the number.</p></div>'; return; }
-  let html = res.slice(0, shown).map(r=>card(r,toks)).join('');
-  if (res.length > shown) html += '<button class="more" id="more">Show more (' + (res.length-shown) + ' left)</button>';
+  $st.textContent = res.length.toLocaleString() + (res.length === 1 ? ' match' : ' matches');
+  if (!res.length){
+    $out.innerHTML = '<div class="empty"><p>No match.</p><p class="tip">Try fewer words or part of the number.</p></div>';
+    return;
+  }
+  let html = res.slice(0, shown).map(r => card(r, toks)).join('');
+  if (res.length > shown) html += '<button class="more" id="more">Show more (' + (res.length - shown).toLocaleString() + ' left)</button>';
   $out.innerHTML = html;
 }
+function setFilter(f){
+  filter = f;
+  document.querySelectorAll('.filters button').forEach(x => x.setAttribute('aria-pressed', x.dataset.f === f ? 'true' : 'false'));
+}
 let timer;
-$q.addEventListener('input', ()=>{ clearTimeout(timer); timer=setTimeout(()=>{shown=60; render(); window.scrollTo(0,0);}, 120); });
-$clr.addEventListener('click', ()=>{ $q.value=''; render(); $q.focus(); });
-document.querySelectorAll('.filters button').forEach(b=>b.addEventListener('click', ()=>{
-  filter = b.dataset.f;
-  document.querySelectorAll('.filters button').forEach(x=>x.setAttribute('aria-pressed', x===b?'true':'false'));
-  shown = 60; render();
-}));
-$out.addEventListener('click', e=>{
-  if (e.target.id==='more'){ shown += 100; render(); return; }
+$q.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => { shown = 50; render(); window.scrollTo(0, 0); }, 120); });
+$q.addEventListener('keydown', e => { if (e.key === 'Enter') $q.blur(); });
+$clr.addEventListener('click', () => { $q.value = ''; render(); $q.focus(); });
+document.querySelectorAll('.filters button').forEach(b => b.addEventListener('click', () => { setFilter(b.dataset.f); shown = 50; render(); }));
+$out.addEventListener('click', e => {
+  if (e.target.id === 'more'){ shown += 100; render(); return; }
+  const ex = e.target.closest('[data-ex]');
+  if (ex){ $q.value = ex.dataset.ex; shown = 50; render(); return; }
+  const g = e.target.closest('[data-goto]');
+  if (g){ setFilter('yard'); $q.value = g.dataset.goto; shown = 50; render(); window.scrollTo(0, 0); return; }
   const b = e.target.closest('[data-copy]');
   if (!b) return;
-  const v = b.dataset.copy;
-  const done = ()=>toast('Copied ' + v);
-  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(done, ()=>fallback(v, done));
+  const v = b.dataset.copy, done = () => toast('Copied ' + v);
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(done, () => fallback(v, done));
   else fallback(v, done);
 });
+$('foot').addEventListener('click', e => {
+  if (e.target.id === 'forget'){ save(KEYNAME, null); toast('Access code forgotten'); setTimeout(() => location.reload(), 600); }
+});
 function fallback(v, done){
-  const t = document.createElement('textarea'); t.value=v; t.setAttribute('readonly','');
-  t.style.position='fixed'; t.style.opacity='0'; document.body.appendChild(t); t.select();
-  try{ document.execCommand('copy'); done(); }catch(_){} t.remove();
+  const t = document.createElement('textarea'); t.value = v; t.setAttribute('readonly', '');
+  t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t); t.select();
+  try { document.execCommand('copy'); done(); } catch(_) {} t.remove();
 }
-let tt; function toast(m){ const el=document.getElementById('toast'); el.textContent=m; el.classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('on'),1400); }
+let tt;
+function toast(m){ const el = $('toast'); el.textContent = m; el.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => el.classList.remove('on'), 1400); }
 render();
-if ('serviceWorker' in navigator && location.protocol==='https:'){
-  navigator.serviceWorker.register('sw.js').catch(()=>{});
-}
 })();
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost') &&
+    !/claude\.ai|claudeusercontent/.test(location.hostname)){
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
 </script>
 </body>
 </html>
