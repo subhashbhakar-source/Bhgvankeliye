@@ -9,6 +9,8 @@ Usage:
   YARD_tools_50043150.md          YARD_lists_index.md
   YARD_50043149.md                YARD_50043149_spares_by_page.md
   YARD_50043141.md                YARD_50043141_accessories_spares_tools_OCR.md
+  pages/p*.txt                    page maps made from "Split - 100 pages/text" SPC files:
+                                  "=== <PDF page> | <printed page>" then the OE numbers on that page
 
 The parts data is gzip-compressed and encrypted (AES-256-GCM, key from the
 access code via PBKDF2-SHA256) so the published site is unreadable without the
@@ -69,6 +71,82 @@ for i in range(1, 13):
             spc.append([cur, pos, oe, qty, lvl, name, rem, kg, asm])
         elif re.match(r'^\s*\d{3}\s*\|', l):
             warn.append(f'unparsed SPC row in {p.name}: {l}')
+
+# Rows printed in the catalogue but missing from the Drive index (found by the page check below).
+# group, pos, part no., qty, level, name, remark, weight
+EXTRA_ROWS = [
+    ('3403', '014', 'OE-34-AOJ-VZO-MXO', 'Pieces', 'L2', 'PISTON SKIRT',
+     'Quantity number not printed in the catalogue text; check the page', '108 kg'),
+]
+for g, pos, oe, qty, lvl, name, rem, kg in EXTRA_ROWS:
+    if any(r[2] == oe for r in spc):
+        continue
+    ci = next(i for i, c in enumerate(chapters) if c[0] == g)
+    at = max(i for i, r in enumerate(spc) if r[0] == ci and r[1] < pos) + 1
+    spc.insert(at, [ci, pos, oe, qty, lvl, name, rem, kg, spc[at - 1][8]])
+
+# ---------- System (catalogue chapter) and exact page of every catalogue row ----------
+# Chapters and their first printed page, from the catalogue's table of contents (PDF pages 3-9).
+# The catalogue has no chapter after 12: groups 9604-9710 are listed at the end of chapter 12.
+SYSTEMS = [[4, 'Framework and bearings', 28], [5, 'Cylinder', 81],
+           [6, 'Crankshaft, connection rod and piston', 118], [7, 'Drive supply unit and control elements', 161],
+           [8, 'Supply unit, pumps and control valves', 180], [9, 'Scavenge air system', 244],
+           [10, 'Cylinder lubrication and balancer', 267], [11, 'Piping', 270], [12, 'Monitoring instruments', 427]]
+for c in chapters:
+    m1 = re.search(r'PDF pages? (\d+)(?:-(\d+))?', c[2])
+    m2 = re.search(r'catalogue pages? (\d+)(?:-(\d+))?', c[2])
+    pa, pb = int(m1.group(1)), int(m1.group(2) or m1.group(1))
+    ca, cb = int(m2.group(1)), int(m2.group(2) or m2.group(1))
+    sysi = max(i for i, s in enumerate(SYSTEMS) if s[2] <= ca)
+    c += [sysi, pa, pb, ca, cb]          # chapter: [group, title, location, sys, pdfFrom, pdfTo, catFrom, catTo]
+
+# Page maps (pages/*.txt): "=== <pdf page> | <printed page>" then the OE numbers on that page.
+occ, printed = {}, {}
+for pm in sorted((RAW / 'pages').glob('p*.txt')):
+    pdf = None
+    for l in pm.read_text(encoding='utf-8').splitlines():
+        m = re.match(r'^===\s*(\d+)\s*\|\s*(\S+)', l)
+        if m:
+            pdf = int(m.group(1))
+            printed[pdf] = int(m.group(2)) if m.group(2).isdigit() else None
+        elif l.startswith('OE-') and pdf:
+            occ.setdefault(l.strip(), []).append(pdf)
+known = {r[2] for r in spc}
+stray = sorted(o for o in occ if o not in known)
+used, nopage, offrange = {}, 0, 0
+for r in spc:
+    c = chapters[r[0]]
+    cand = [p for p in occ.get(r[2], []) if c[4] <= p <= c[5]]
+    k = used.get((r[0], r[2]), 0)
+    used[(r[0], r[2])] = k + 1
+    if cand:
+        p = cand[min(k, len(cand) - 1)]
+        cp = printed.get(p)
+        if cp is None or not (c[6] <= cp <= c[7]):
+            offrange += 1
+        r += [p, cp or 0]
+    else:
+        nopage += 1
+        r += [0, 0]
+# rows printed without a part number: same page as the rows around them, when those agree
+for i, r in enumerate(spc):
+    if r[9]:
+        continue
+    prev = next((x for x in reversed(spc[:i]) if x[0] == r[0] and x[9]), None)
+    nxt = next((x for x in spc[i + 1:] if x[0] == r[0] and x[9]), None)
+    if prev and (nxt is None or nxt[9] == prev[9]):
+        r[9], r[10] = prev[9], prev[10]
+        nopage -= 1
+    elif nxt and prev is None:
+        r[9], r[10] = nxt[9], nxt[10]
+        nopage -= 1
+# rows of one chapter should run forward through its pages
+backwards = sum(1 for a, b in zip(spc, spc[1:]) if a[0] == b[0] and a[9] and b[9] and b[9] < a[9])
+print(f'pages: {len(spc) - nopage} of {len(spc)} catalogue rows have an exact page; '
+      f'{nopage} without; {offrange} printed page outside chapter range; {backwards} page order reversals; '
+      f'{len(stray)} map numbers not in catalogue data')
+for o in stray[:20]:
+    warn.append(f'page map number not in catalogue data: {o} on PDF {occ[o]}')
 
 # ---------- CMD tools list 50043150 (one row per item) ----------
 tools = []
@@ -138,6 +216,21 @@ for p in pages:
     if not p[2]:
         p[2] = p[3][0] if p[3] else ''
 
+# System for the 50043149 pages: the catalogue chapter of the first WinGD group named in "items:"
+grp_sys = {}
+for c in chapters:
+    grp_sys.setdefault(c[0][:4], c[3])
+for p in pages:
+    sysi = -1
+    if p[0] == 0:
+        for l in p[3]:
+            if l.startswith('items:'):
+                for g in re.findall(r'(?<![\d.])(\d{4})(?=-\d|\s|;|$)', l[6:]):
+                    if g in grp_sys:
+                        sysi = grp_sys[g]
+                        break
+    p.append(sysi)
+
 # WinGD groups that the yard lists name as group items (for the "CMD / SAP numbers for group" link)
 ygroups = {t[0][:4] for t in tools}
 for p in pages:
@@ -152,7 +245,8 @@ meta = {
     'built': datetime.date.today().isoformat(),
     'counts': {'spc': len(spc), 'tools': len(tools), 'pages': len(pages)},
 }
-data = {'meta': meta, 'chapters': chapters, 'spc': spc, 'tools': tools, 'lists': lists, 'pages': pages, 'ygroups': ygroups}
+data = {'meta': meta, 'systems': [[s[0], s[1]] for s in SYSTEMS], 'chapters': chapters, 'spc': spc,
+        'tools': tools, 'lists': lists, 'pages': pages, 'ygroups': ygroups}
 plain = json.dumps(data, ensure_ascii=False, separators=(',', ':')).encode()
 
 # ---------- encrypt ----------

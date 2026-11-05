@@ -71,6 +71,12 @@ main{padding-block:10px calc(env(safe-area-inset-bottom, 0px) + 24px);max-width:
 .meta{margin-top:8px;font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 12px}
 .meta b{color:var(--ink);font-weight:600}
 .grp{font-size:13px;margin-top:6px;word-break:break-word}
+.fields{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:7px 12px;margin-top:10px;font-size:14px;line-height:1.35}
+.fl{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em;padding-top:2px}
+.fv{min-width:0;word-break:break-word}
+.sub{color:var(--muted);font-size:12px}
+.card.exact{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.tag{display:inline-block;font-size:11px;font-weight:650;color:var(--accent-ink);background:var(--accent);border-radius:6px;padding:2px 7px;margin-bottom:6px}
 .ln{font-size:13px;margin-top:4px;word-break:break-word}
 .note{font-size:12px;margin-top:8px;padding:6px 8px;border-radius:8px;background:var(--warn-bg);color:var(--warn)}
 .link{border:0;background:none;color:var(--accent);font-size:13px;padding:6px 0 0;cursor:pointer;text-align:left}
@@ -186,24 +192,26 @@ if (!D) D = await unlock();
 $('app').hidden = false;
 
 // ---------- data ----------
-// chapters: [group, title, location]
-// spc:   [chapterIdx, pos, oe, qty, level, name, remark, kg, assembly]
+// systems:  [chapter no., name]  (chapters of the WinGD catalogue)
+// chapters: [group, title, location, systemIdx, pdfFrom, pdfTo, pageFrom, pageTo]
+// spc:   [chapterIdx, pos, oe, qty, level, name, remark, kg, assembly, pdfPage, printedPage]
 // tools: [groupItem, cmd, drawing, description, qty, kg, page]
-// pages: [listIdx, page, title, [lines], [cmd numbers]]
-const CH = D.chapters, LISTS = D.lists, rows = [];
+// pages: [listIdx, page, title, [lines], [cmd numbers], systemIdx or -1]
+const CH = D.chapters, LISTS = D.lists, SYS = D.systems || [], rows = [];
 for (const r of D.spc){ const c = CH[r[0]];
-  rows.push({t:'spc', grp:c[0], title:c[1], loc:c[2], pos:r[1], oe:r[2], qty:r[3], lvl:r[4], name:r[5], rem:r[6], kg:r[7], asm:r[8]}); }
+  rows.push({t:'spc', grp:c[0], title:c[1], sys:SYS[c[3]], pdfR:[c[4], c[5]], catR:[c[6], c[7]],
+    pos:r[1], oe:r[2], qty:r[3], lvl:r[4], name:r[5], rem:r[6], kg:r[7], asm:r[8], pdf:r[9], pg:r[10]}); }
 for (const r of D.tools)
   rows.push({t:'tool', gi:r[0], cmd:r[1], dwg:r[2], name:r[3], qty:r[4], kg:r[5], page:r[6]});
 for (const r of D.pages)
-  rows.push({t:'page', list:LISTS[r[0]], page:r[1], title:r[2], lines:r[3], cmds:r[4]});
+  rows.push({t:'page', list:LISTS[r[0]], page:r[1], title:r[2], lines:r[3], cmds:r[4], sys:r[5] >= 0 ? SYS[r[5]] : null});
 
 const norm = s => String(s == null ? '' : s).toLowerCase();
 const squash = s => norm(s).replace(/[^a-z0-9一-鿿]/g, '');
 const yardGroups = new Set(D.ygroups || []);
 for (const r of rows){
   let parts;
-  if (r.t === 'spc') parts = [r.oe, r.name, r.rem, r.asm, r.grp, r.title, r.pos];
+  if (r.t === 'spc') parts = [r.oe, r.name, r.rem, r.asm, r.grp, r.title, r.pos, r.sys ? r.sys[1] : ''];
   else if (r.t === 'tool') parts = [r.cmd, r.dwg, r.name, r.gi, 'tool tools 50043150'];
   else parts = [r.title, r.lines.join(' '), r.cmds.join(' '), r.list.id];
   r.hay = norm(parts.join(' | '));
@@ -250,35 +258,50 @@ function search(q){
 function chip(label, value, cls, toks){
   return '<button class="id' + (cls ? ' ' + cls : '') + '" data-copy="' + esc(value) + '"><span class="lbl">' + label + '</span>' + hl(value, toks) + '</button>';
 }
-function card(r, toks){
+function field(label, html){ return '<div class="fl">' + label + '</div><div class="fv">' + html + '</div>'; }
+function sysName(s){ return s ? '<b>' + esc(s[1]) + '</b> <span class="sub">(chapter ' + s[0] + ')</span>' : ''; }
+function card(r, toks, exact){
   const h = t => hl(t, toks);
+  const top = '<div class="card' + (exact ? ' exact' : '') + '">' + (exact ? '<div class="tag">Exact match</div>' : '');
   if (r.t === 'spc'){
-    return '<div class="card"><div class="src">WinGD spare parts catalogue</div>' +
+    const page = r.pg
+      ? 'Page <b>' + r.pg + '</b> of the Spare Parts Catalogue<br><span class="sub">PDF page ' + r.pdf + '</span>'
+      : 'Pages <b>' + r.catR[0] + '–' + r.catR[1] + '</b> of the Spare Parts Catalogue<br><span class="sub">PDF pages ' + r.pdfR[0] + '–' + r.pdfR[1] + '</span>';
+    return top + '<div class="src">WinGD X72DF-2.1 spare parts catalogue</div>' +
       '<div class="name">' + h(r.name) + '</div>' +
       (r.rem ? '<div class="rem">' + h(r.rem) + '</div>' : '') +
       '<div class="ids">' + chip('OE part no.', r.oe, '', toks) + '</div>' +
-      '<div class="grp">Group <b>' + h(r.grp) + '</b> ' + h(r.title) + (r.asm ? ' <span class="rem">[' + h(r.asm) + ']</span>' : '') + '</div>' +
-      '<div class="meta"><span>Pos <b>' + esc(r.pos) + '</b></span><span>Qty <b>' + esc(r.qty) + '</b></span>' +
-        (r.lvl ? '<span>' + esc(r.lvl) + '</span>' : '') + (r.kg ? '<span>' + esc(r.kg) + '</span>' : '') + '</div>' +
-      '<div class="meta"><span>' + esc(r.loc) + '</span></div>' +
+      '<div class="fields">' +
+        field('System', sysName(r.sys) + '<br>Group <b>' + h(r.grp) + '</b> ' + h(r.title)) +
+        field('Manual', page) +
+        (r.asm ? field('Assembly', h(r.asm)) : '') +
+        field('Item', 'Pos <b>' + esc(r.pos) + '</b> · Qty <b>' + esc(r.qty) + '</b>' + (r.lvl ? ' · ' + esc(r.lvl) : '') + (r.kg ? ' · ' + esc(r.kg) : '')) +
+      '</div>' +
       (yardGroups.has(r.grp.slice(0, 4)) ? '<button class="link" data-goto="' + esc(r.grp.slice(0, 4)) + '">CMD / SAP numbers for group ' + esc(r.grp.slice(0, 4)) + ' →</button>' : '') +
     '</div>';
   }
   if (r.t === 'tool'){
-    return '<div class="card"><div class="src">CMD list 50043150 · tools</div>' +
+    return top + '<div class="src">CMD / Jiangnan yard list 50043150 · tools</div>' +
       '<div class="name">' + h(r.name || '(no name printed)') + '</div>' +
       '<div class="ids">' + (r.cmd ? chip('CMD / SAP material no.', r.cmd, 'sap', toks) : '') +
         (r.dwg ? chip('Drawing no.', r.dwg, '', toks) : '') + '</div>' +
       (r.cmd ? '' : '<div class="rem">No CMD number printed for this line.</div>') +
-      '<div class="meta"><span>Group item <b>' + h(r.gi) + '</b></span>' + (r.qty ? '<span>Qty <b>' + esc(r.qty) + '</b></span>' : '') +
-        (r.kg ? '<span>' + esc(r.kg) + ' kg</span>' : '') + (r.page ? '<span>List page ' + esc(r.page) + '</span>' : '') + '</div>' +
+      '<div class="fields">' +
+        field('System', '<b>Engine tools</b> <span class="sub">(group ' + h(r.gi.slice(0, 4)) + ')</span>') +
+        field('Manual', 'List of Tools 50043150, page <b>' + esc(r.page) + '</b>') +
+        field('Item', 'Group item <b>' + h(r.gi) + '</b>' + (r.qty ? ' · Qty <b>' + esc(r.qty) + '</b>' : '') + (r.kg ? ' · ' + esc(r.kg) + ' kg' : '')) +
+      '</div>' +
     '</div>';
   }
   const hit = toks.length ? r.lines.filter(l => toks.some(t => norm(l).indexOf(t) >= 0)) : [];
   const lines = (hit.length ? hit : r.lines).slice(0, 8);
-  return '<div class="card"><div class="src">' + esc(r.list.name) + ' · PDF page ' + esc(r.page) + '</div>' +
+  return top + '<div class="src">' + esc(r.list.name) + '</div>' +
     '<div class="name">' + h(r.title) + '</div>' +
     (r.cmds.length ? '<div class="ids">' + r.cmds.map(n => chip('CMD / SAP no.', n, 'sap', toks)).join('') + '</div>' : '') +
+    '<div class="fields">' +
+      field('System', r.sys ? sysName(r.sys) + '<br>' + h(r.title) : h(r.title)) +
+      field('Manual', 'List ' + esc(r.list.id) + ', PDF page <b>' + esc(r.page) + '</b>') +
+    '</div>' +
     lines.map(l => '<div class="ln">' + h(l) + '</div>').join('') +
     '<div class="note">' + esc(r.list.note) + '</div>' +
     (r.lines.length > lines.length ? '<details><summary>All text on this page (' + r.lines.length + ' lines)</summary>' +
@@ -292,7 +315,7 @@ function render(){
     $st.textContent = '';
     $out.innerHTML = '<div class="empty"><p><b>Search ' + rows.length.toLocaleString() + ' parts, tools and yard list pages.</b></p>' +
       '<p class="tip">Type a name, an OE number, a CMD/SAP number or a group. Try one of these:</p><div class="ex">' +
-      ['fuel pump seal', 'o-ring 2124', 'exhaust valve', 'OE-55-AAL', '50000349', 'torque spanner'].map(x =>
+      ['OE-55-AJU-DKE-GUQ', 'fuel pump seal', 'o-ring 2124', 'exhaust valve', '50000349', 'torque spanner'].map(x =>
         '<button data-ex="' + esc(x) + '">' + esc(x) + '</button>').join('') +
       '</div><p class="tip">Words can be in any order. Tap a number to copy it.</p></div>';
     return;
@@ -303,7 +326,9 @@ function render(){
     $out.innerHTML = '<div class="empty"><p>No match.</p><p class="tip">Try fewer words or part of the number.</p></div>';
     return;
   }
-  let html = res.slice(0, shown).map(r => card(r, toks)).join('');
+  const qs = squash(q), qt = q.trim();
+  const isExact = r => (r.oe && squash(r.oe) === qs) || r.cmd === qt || (r.cmds && r.cmds.indexOf(qt) >= 0);
+  let html = res.slice(0, shown).map(r => card(r, toks, isExact(r))).join('');
   if (res.length > shown) html += '<button class="more" id="more">Show more (' + (res.length - shown).toLocaleString() + ' left)</button>';
   $out.innerHTML = html;
 }

@@ -2,7 +2,7 @@
 
 An iPhone-friendly web app (PWA) for searching the WinGD X72DF-2.1 spare parts on Al Areef:
 
-- **WinGD Spare Parts Catalogue** (Issue 001, 2022-08): 2,909 rows with OE part number, name, group, position, quantity, weight and catalogue page.
+- **WinGD Spare Parts Catalogue** (Issue 001, 2022-08): 2,910 rows. Each shows the part name as printed, the OE part number, the system (catalogue chapter and group), the exact catalogue page and PDF page, position, quantity and weight.
 - **CMD / Jiangnan yard lists**: 50043150 tools (404 rows with CMD material and drawing numbers), 50043149 engine spares (per PDF page) and 50043141 accessories spares and tools (OCR text per PDF page).
 
 It works offline once it is installed. Tap any number to copy it for SAP.
