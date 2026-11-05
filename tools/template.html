@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>XDF Parts Finder</title>
+<meta name="description" content="Offline search of WinGD X72DF-2.1 spare parts: OE part numbers, names and CMD/SAP material numbers.">
+<meta name="theme-color" content="#0f1720">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="XDF Parts">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<style>
+:root{
+  --bg:#f4f6f8; --card:#ffffff; --ink:#0f1720; --muted:#5b6672; --line:#dde3e9;
+  --accent:#0b6bcb; --accent-ink:#ffffff; --chip:#eaf1fa; --sap:#0a7a45; --sap-bg:#e6f5ec;
+  --yard:#8a4b00; --yard-bg:#fbefdf; --hl:#fff2a8;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1720; --card:#17212c; --ink:#e8edf2; --muted:#93a1af; --line:#263342;
+    --accent:#4ea3ff; --accent-ink:#06121f; --chip:#1d2b3a; --sap:#5fd49a; --sap-bg:#123326;
+    --yard:#ffb866; --yard-bg:#3a2a14; --hl:#5c4d00;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1720; --card:#17212c; --ink:#e8edf2; --muted:#93a1af; --line:#263342;
+  --accent:#4ea3ff; --accent-ink:#06121f; --chip:#1d2b3a; --sap:#5fd49a; --sap-bg:#123326;
+  --yard:#ffb866; --yard-bg:#3a2a14; --hl:#5c4d00;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
+  -webkit-text-size-adjust:100%}
+header{position:sticky;top:0;z-index:5;background:var(--bg);
+  padding:calc(env(safe-area-inset-top) + 10px) 16px 8px;border-bottom:1px solid var(--line)}
+h1{font-size:17px;margin:0 0 8px;font-weight:650;display:flex;justify-content:space-between;align-items:baseline}
+h1 small{font-weight:400;color:var(--muted);font-size:12px}
+.search{position:relative}
+.search input{width:100%;font-size:17px;padding:12px 40px 12px 14px;border-radius:12px;
+  border:1px solid var(--line);background:var(--card);color:var(--ink);outline:none;-webkit-appearance:none}
+.search input:focus{border-color:var(--accent)}
+.clear{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;
+  color:var(--muted);font-size:22px;width:34px;height:34px;display:none}
+.filters{display:flex;gap:6px;margin-top:8px;overflow-x:auto;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.filters button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);
+  border-radius:999px;padding:6px 12px;font-size:14px}
+.filters button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+#status{font-size:12px;color:var(--muted);margin-top:6px;min-height:16px}
+main{padding:10px 16px calc(env(safe-area-inset-bottom) + 24px)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 12px 10px;margin-bottom:10px}
+.name{font-weight:650;font-size:16px;word-break:break-word}
+.rem{color:var(--muted);font-size:13px;margin-top:2px;word-break:break-word}
+.ids{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.id{font:600 14px/1.2 ui-monospace,"SF Mono",Menlo,monospace;padding:6px 9px;border-radius:8px;
+  background:var(--chip);border:0;color:var(--ink);text-align:left}
+.id.sap{background:var(--sap-bg);color:var(--sap)}
+.id.yard{background:var(--yard-bg);color:var(--yard)}
+.id .lbl{display:block;font:500 10px/1.2 -apple-system,sans-serif;opacity:.75;letter-spacing:.02em;text-transform:uppercase}
+.meta{margin-top:8px;font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 12px}
+.meta b{color:var(--ink);font-weight:550}
+.grp{font-size:13px;margin-top:6px;color:var(--ink)}
+.grp a{color:var(--accent);text-decoration:none}
+mark{background:var(--hl);color:inherit;border-radius:3px}
+.empty{color:var(--muted);text-align:center;padding:40px 10px}
+.empty p{margin:6px 0}
+.tip{font-size:13px}
+.more{display:block;width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);
+  background:var(--card);color:var(--accent);font-size:15px}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 20px);transform:translateX(-50%);
+  background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:999px;font-size:14px;opacity:0;
+  transition:opacity .2s;pointer-events:none}
+#toast.on{opacity:1}
+footer{color:var(--muted);font-size:11px;text-align:center;padding:8px 16px 30px}
+</style>
+</head>
+<body>
+<header>
+  <h1>XDF Parts Finder <small id="count"></small></h1>
+  <div class="search">
+    <input id="q" type="search" inputmode="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+      placeholder="Name, OE no., SAP/CMD no., group…" aria-label="Search parts">
+    <button class="clear" id="clr" aria-label="Clear">×</button>
+  </div>
+  <div class="filters" role="group" aria-label="Source">
+    <button data-f="all" aria-pressed="true">All</button>
+    <button data-f="spc" aria-pressed="false">WinGD SPC (OE no.)</button>
+    <button data-f="yard" aria-pressed="false">Yard / CMD (SAP)</button>
+  </div>
+  <div id="status"></div>
+</header>
+<main id="out"></main>
+<footer id="foot"></footer>
+<div id="toast"></div>
+
+<script id="data" type="application/json">/*DATA*/</script>
+<script>
+(function(){
+"use strict";
+const D = JSON.parse(document.getElementById('data').textContent);
+// D.chapters: [group, title, location]   D.spc: [chapterIdx, pos, oe, qty, level, name, remark, kg, assembly]
+// D.yard: [list, groupItem, cmd, drawing, desc, qty, kg, page]
+const CH = D.chapters;
+const rows = [];
+for (const r of D.spc){
+  const c = CH[r[0]];
+  rows.push({src:'spc', grp:c[0], title:c[1], loc:c[2], pos:r[1], oe:r[2], qty:r[3], lvl:r[4], name:r[5], rem:r[6], kg:r[7], asm:r[8]});
+}
+for (const r of D.yard){
+  rows.push({src:'yard', list:r[0], gi:r[1], cmd:r[2], dwg:r[3], name:r[4], qty:r[5], kg:r[6], page:r[7]});
+}
+const norm = s => (s||'').toLowerCase();
+const squash = s => norm(s).replace(/[^a-z0-9一-鿿]/g,'');
+for (const r of rows){
+  const parts = r.src==='spc'
+    ? [r.oe, r.name, r.rem, r.asm, r.grp, r.title, 'grp'+r.grp, r.pos]
+    : [r.cmd, r.dwg, r.name, r.gi, r.list, (r.gi||'').split('-')[0]];
+  r.hay = norm(parts.join(' | '));
+  r.hayS = squash(parts.join(''));
+}
+document.getElementById('count').textContent = rows.length.toLocaleString() + ' items';
+document.getElementById('foot').innerHTML =
+  'Data: ' + esc(D.meta.source) + '<br>Built ' + esc(D.meta.built) +
+  '. Always confirm on the catalogue page before ordering.';
+
+let filter = 'all', shown = 60, lastQ = null;
+const $q = document.getElementById('q'), $out = document.getElementById('out'),
+      $st = document.getElementById('status'), $clr = document.getElementById('clr');
+
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function hl(text, toks){
+  let s = esc(text);
+  if (!toks.length) return s;
+  const re = new RegExp('(' + toks.map(t=>t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|') + ')','gi');
+  return s.replace(re,'<mark>$1</mark>');
+}
+function search(q){
+  const toks = norm(q).split(/\s+/).filter(Boolean);
+  const res = [];
+  for (const r of rows){
+    if (filter!=='all' && r.src!==filter) continue;
+    let ok = true, score = 0;
+    for (const t of toks){
+      const st = squash(t);
+      const i = r.hay.indexOf(t);
+      if (i>=0){ score += (i===0?3:1); }
+      else if (st.length>=3 && r.hayS.indexOf(st)>=0){ score += 2; }
+      else { ok = false; break; }
+      // exact id match boost
+      if (r.oe && squash(r.oe)===st) score += 50;
+      if (r.cmd && r.cmd===t) score += 50;
+      if (r.grp && r.grp===t) score += 5;
+    }
+    if (ok) res.push([score, r]);
+  }
+  res.sort((a,b)=>b[0]-a[0]);
+  return {toks, res: res.map(x=>x[1])};
+}
+function card(r, toks){
+  const h = t => hl(t, toks);
+  if (r.src==='spc'){
+    return '<div class="card">' +
+      '<div class="name">' + h(r.name) + '</div>' +
+      (r.rem ? '<div class="rem">' + h(r.rem) + '</div>' : '') +
+      '<div class="ids"><button class="id" data-copy="'+esc(r.oe)+'"><span class="lbl">OE part no.</span>' + h(r.oe) + '</button></div>' +
+      '<div class="grp">Group <b>' + h(r.grp) + '</b> · ' + h(r.title) + (r.asm ? ' · <span style="color:var(--muted)">[' + h(r.asm) + ']</span>' : '') + '</div>' +
+      '<div class="meta"><span>Pos <b>' + esc(r.pos) + '</b></span><span>Qty <b>' + esc(r.qty) + '</b></span>' +
+        (r.lvl?'<span>' + esc(r.lvl) + '</span>':'') + (r.kg?'<span>' + esc(r.kg) + '</span>':'') + '</div>' +
+      '<div class="meta"><span>' + esc(r.loc) + '</span></div>' +
+    '</div>';
+  }
+  return '<div class="card">' +
+    '<div class="name">' + h(r.name) + '</div>' +
+    '<div class="ids">' +
+      (r.cmd ? '<button class="id sap" data-copy="'+esc(r.cmd)+'"><span class="lbl">CMD / SAP material</span>' + h(r.cmd) + '</button>' : '<span class="id yard"><span class="lbl">CMD / SAP material</span>not printed</span>') +
+      (r.dwg ? '<button class="id" data-copy="'+esc(r.dwg)+'"><span class="lbl">Drawing no.</span>' + h(r.dwg) + '</button>' : '') +
+    '</div>' +
+    '<div class="grp">' + (r.gi ? 'Group item <b>' + h(r.gi) + '</b> · ' : '') + esc(r.list) + '</div>' +
+    '<div class="meta">' + (r.qty?'<span>Qty <b>' + esc(r.qty) + '</b></span>':'') + (r.kg?'<span>' + esc(r.kg) + ' kg</span>':'') +
+      (r.page?'<span>List page ' + esc(r.page) + '</span>':'') + '</div>' +
+  '</div>';
+}
+function render(){
+  const q = $q.value.trim();
+  $clr.style.display = q ? 'block' : 'none';
+  if (q.length < 2){
+    $st.textContent = '';
+    $out.innerHTML = '<div class="empty"><p><b>Type at least 2 characters.</b></p>' +
+      '<p class="tip">Examples: <i>o-ring 2124</i>, <i>OE-96-AXV</i>, <i>5000332</i>, <i>fuel pump seal</i>, <i>exhaust valve</i></p>' +
+      '<p class="tip">Tap a number to copy it.</p></div>';
+    return;
+  }
+  const {toks, res} = search(q);
+  $st.textContent = res.length.toLocaleString() + ' match' + (res.length===1?'':'es');
+  if (!res.length){ $out.innerHTML = '<div class="empty"><p>No match.</p><p class="tip">Try fewer words, or part of the number.</p></div>'; return; }
+  let html = res.slice(0, shown).map(r=>card(r,toks)).join('');
+  if (res.length > shown) html += '<button class="more" id="more">Show more (' + (res.length-shown) + ' left)</button>';
+  $out.innerHTML = html;
+}
+let timer;
+$q.addEventListener('input', ()=>{ clearTimeout(timer); timer=setTimeout(()=>{shown=60; render(); window.scrollTo(0,0);}, 120); });
+$clr.addEventListener('click', ()=>{ $q.value=''; render(); $q.focus(); });
+document.querySelectorAll('.filters button').forEach(b=>b.addEventListener('click', ()=>{
+  filter = b.dataset.f;
+  document.querySelectorAll('.filters button').forEach(x=>x.setAttribute('aria-pressed', x===b?'true':'false'));
+  shown = 60; render();
+}));
+$out.addEventListener('click', e=>{
+  if (e.target.id==='more'){ shown += 100; render(); return; }
+  const b = e.target.closest('[data-copy]');
+  if (!b) return;
+  const v = b.dataset.copy;
+  const done = ()=>toast('Copied ' + v);
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(done, ()=>fallback(v, done));
+  else fallback(v, done);
+});
+function fallback(v, done){
+  const t = document.createElement('textarea'); t.value=v; t.setAttribute('readonly','');
+  t.style.position='fixed'; t.style.opacity='0'; document.body.appendChild(t); t.select();
+  try{ document.execCommand('copy'); done(); }catch(_){} t.remove();
+}
+let tt; function toast(m){ const el=document.getElementById('toast'); el.textContent=m; el.classList.add('on'); clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('on'),1400); }
+render();
+if ('serviceWorker' in navigator && location.protocol==='https:'){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+})();
+</script>
+</body>
+</html>
