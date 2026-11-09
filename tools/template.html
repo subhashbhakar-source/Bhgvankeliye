@@ -112,7 +112,11 @@ button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid
   background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:999px;font-size:14px;opacity:0;
   transition:opacity .2s;pointer-events:none;z-index:9}
 #toast.on{opacity:1}
-footer{color:var(--muted);font-size:11px;text-align:center;padding-block:8px 30px;max-width:760px;margin:0 auto}
+footer{color:var(--muted);font-size:11px;text-align:center;padding-block:8px 6px;max-width:760px;margin:0 auto}
+.offl{text-align:center;font-size:13px;line-height:1.4;color:var(--muted);max-width:760px;margin:0 auto;padding-block:6px calc(env(safe-area-inset-bottom, 0px) + 28px)}
+.offl.ok{color:var(--sap);font-weight:600}
+.offl.warn{color:var(--warn)}
+.offl .upd{display:block;color:var(--accent);font-weight:600;margin-top:4px}
 #lock{padding-block:18vh 24px}
 .lockbox{width:100%;max-width:380px;margin:0 auto}
 .lockbox h1{font-size:22px;display:block}
@@ -155,6 +159,7 @@ footer{color:var(--muted);font-size:11px;text-align:center;padding-block:8px 30p
   </header>
   <main id="out"></main>
   <footer id="foot"></footer>
+  <div id="offline" class="offl" role="status" aria-live="polite"></div>
 </div>
 <div id="zoom" hidden><img id="zoomimg" alt=""></div>
 <div id="toast"></div>
@@ -208,6 +213,7 @@ const saved = load(KEYNAME);
 if (saved){ try { D = await decrypt(b64(saved)); } catch(_) { save(KEYNAME, null); } }
 if (!D) D = await unlock();
 $('app').hidden = false;
+if (window.xdfOfflineRefresh) window.xdfOfflineRefresh();
 
 // ---------- data ----------
 // systems:  [chapter no., name]  (chapters of the WinGD catalogue)
@@ -453,10 +459,44 @@ let tt;
 function toast(m){ const el = $('toast'); el.textContent = m; el.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => el.classList.remove('on'), 1400); }
 render();
 })();
-if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost') &&
-    !/claude\.ai|claudeusercontent/.test(location.hostname)){
-  navigator.serviceWorker.register('sw.js').catch(() => {});
-}
+(function offlineStatus(){
+  const el = document.getElementById('offline');
+  const set = (cls, html) => { el.className = 'offl ' + cls; el.innerHTML = html; };
+  if (/claude\.ai|claudeusercontent/.test(location.hostname)){
+    set('', 'This view needs an internet connection. The app installed on the iPhone from GitHub Pages works offline.');
+    return;
+  }
+  if (!('serviceWorker' in navigator) || !(location.protocol === 'https:' || location.hostname === 'localhost')){
+    set('warn', 'Offline use is not available in this browser.');
+    return;
+  }
+  let updateReady = false, hadController = !!navigator.serviceWorker.controller;
+  const count = () => { const c = document.getElementById('count').textContent; return c ? 'All ' + c + ' are' : 'All data is'; };
+  async function cached(){
+    try { return !!(await caches.match('./index.html', {ignoreSearch: true}) && await caches.match('./icon-192.png')); }
+    catch(_) { return false; }
+  }
+  async function refresh(){
+    const ok = await cached();
+    const upd = updateReady ? '<span class="upd">Update downloaded. Close the app fully and open it again to use it.</span>' : '';
+    if (ok) set('ok', '✓ Available offline. ' + count() + ' stored on this device.' +
+      (navigator.onLine ? '' : ' You are offline now, using the stored copy.') + upd);
+    else set('', (navigator.onLine ? 'Downloading for offline use…' : 'Not yet stored for offline use. Connect to the internet once.') + upd);
+    return ok;
+  }
+  window.xdfOfflineRefresh = refresh;
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    const watch = w => { if (w) w.addEventListener('statechange', () => { if (w.state === 'activated') refresh(); }); };
+    watch(reg.installing);
+    reg.addEventListener('updatefound', () => watch(reg.installing));
+  }).catch(() => set('warn', 'Offline use could not be set up in this browser.'));
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController) updateReady = true; hadController = true; refresh(); });
+  window.addEventListener('online', refresh);
+  window.addEventListener('offline', refresh);
+  let tries = 0;
+  const timer = setInterval(async () => { if (await refresh() || ++tries > 40) clearInterval(timer); }, 1500);
+  refresh();
+})();
 </script>
 </body>
 </html>
