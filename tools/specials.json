@@ -1,0 +1,19 @@
+[
+  {
+    "tag": "Frequent order",
+    "title": "PILOT PUMP FILTER ELEMENT 10 µm",
+    "subtitle": "ME pilot fuel duplex filter (Parker 45M housing)",
+    "oe": "OE-55-AMD-OWB-FWG",
+    "parker": "939012Q",
+    "label": "45M 2 10Q V MP ELEMENT",
+    "details": [
+      "Parker 45M series medium-pressure duplex filter housing, element length size 2",
+      "10 µm absolute, Microglass III (Q media), Viton (FKM) seals",
+      "Box qty 1 element (label: BOX QTY 001)"
+    ],
+    "manual": "Parker box label below (tap to enlarge). Not listed in the X72DF-2.1 Spare Parts Catalogue (it has no pilot filter row in groups 5555, 8791 or 8792).",
+    "photo": "specials/parker-939012Q-label.jpg",
+    "photo_caption": "Parker box label: Part 939012Q, Descr 45M 2 10Q V MP ELEMENT, box qty 001, Parker Filtration Group Europe, made in CZ",
+    "search": "pilot pump filter pilot fuel filter duplex filter 10 micron 10um 10 µm parker element insert 45M210QVMP"
+  }
+]

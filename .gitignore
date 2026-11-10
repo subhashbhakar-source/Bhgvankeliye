@@ -1,0 +1,7 @@
+# Never commit the unencrypted parts data or the access code
+raw/
+verify/
+*.md.raw
+plain.json
+access_code.txt
+*.secret
