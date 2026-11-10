@@ -7,6 +7,8 @@ An iPhone-friendly web app (PWA) for searching the WinGD X72DF-2.1 spare parts o
 
 - **SAP material numbers** (plant 81N3 equipment BOM, cross-referenced 5 Nov 2026): shown next to the OE or CMD number with the SAP name, and searchable both ways. Parts with several SAP materials carry a warning; parts not on the BOM say so. Other SAP items (maker, sub-supplier and WinGD ID numbers) are searchable too, each with its SAP equipment name as the system. They cover every equipment the SAP BOM export names as main engine or iCER (ME1, ME, M/E, MAIN ENGINE, ICER), including the exhaust gas boiler, iCER system, FO pilot and supply pumps and the AutoChief M/E interface unit.
 
+- **Maker part no. beside SAP material no.**: in the SAP section of every card, and in every machine's parts list, the two numbers sit side by side. The maker part no. is shown exactly as SAP stores it, including the endings SAP adds when one OE number has several materials (for example `OE-17-AJR-HGB-UDY-251` and `-237`), and a second maker no. where SAP holds one.
+
 - **Frequent orders** are pinned at the top of the start screen and always listed first in search. They are defined in `tools/specials.json` (title, OE no., Parker or maker no., label code, notes); the SAP no. is looked up from the SAP table by OE no. at build time.
 
 - **Other machinery** (switch, off by default): the rest of the ship from the same SAP BOM export, 355 machines with 15,622 parts-list lines (generators, compressors, cargo and deck machinery and so on). It is searched only while the switch is on. The data sits in its own encrypted file, `docs/other-<hash>.dat`, which the phone stores once and downloads again only when that data changes.

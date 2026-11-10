@@ -301,7 +301,8 @@ for row, sap, desc in sap_rows('SAP_XREF_other_maker_nos.tsv'):
 ME_NAME = re.compile(r'(^|[^A-Z])(ME[12]?|M/E|ICER)([^A-Z]|$)|MAIN ENGINE')
 def me_scope(name, floc):
     return floc.startswith('A-LS-REEF-0600-010') or bool(ME_NAME.search(name.upper()))
-bom = []    # (main engine scope?, equipment no., equipment name, BOM no., item no., SAP no., description, maker no.)
+clean = lambda s: re.sub(r'[^A-Z0-9]', '', s.upper())
+bom = []    # (main engine scope?, equipment no., equipment name, BOM no., item no., SAP no., description, maker no., second maker no.)
 with open(RAW / 'sap' / 'bom_81N3_full_export.tsv', encoding='utf-8', newline='') as fh:
     for row in csv.DictReader(fh, delimiter='\t'):
         name = ' '.join(row['Object Description'].split())
@@ -309,17 +310,22 @@ with open(RAW / 'sap' / 'bom_81N3_full_export.tsv', encoding='utf-8', newline=''
         if not re.fullmatch(r'\d{12}', sap) or not item.isdigit():
             warn.append(f'odd BOM line skipped: material {sap!r} item {item!r} on {name}')
             continue
+        # SAP has two maker part no. columns. The first (HERS) is the one normally filled; the second (MPN)
+        # is used when the first is empty, and kept as a "second maker no." when it says something different.
+        hers, mpn = row['Manufacturer Part (HERS)'].strip(), row['Manufacturer Part No. (MPN)'].strip()
         bom.append((me_scope(name, row['Functional Location']), row['Equipment'].strip(), name, row['BOM Number'].strip(),
-                    int(item), sap, row['Material Description'].strip(),
-                    row['Manufacturer Part (HERS)'].strip() or row['Manufacturer Part No. (MPN)'].strip()))
+                    int(item), sap, row['Material Description'].strip(), hers or mpn,
+                    mpn if hers and mpn and clean(hers) != clean(mpn) else ''))
 
 # Main engine: the materials the cross-reference tables do not list, the maker no. SAP keeps in its second
 # column (MPN) when the first is empty, and the SAP equipment name of every "other SAP" entry (its system).
 have = {s[0] for l in oesap.values() for s in l} | {s[0] for l in cmdsap.values() for s in l} | {r[2] for r in saprecs}
-bom_eq, bom_mk, bom_new, bom_scope = {}, {}, {}, set()
-for me, eqno, name, bomno, item, sap, desc, mk in bom:
+bom_eq, bom_mk, bom_mk2, bom_new, bom_scope = {}, {}, {}, {}, set()
+for me, eqno, name, bomno, item, sap, desc, mk, mk2 in bom:
     if not me:
         continue
+    if mk2:
+        bom_mk2.setdefault(sap, mk2)
     bom_scope.add(sap)
     eqs = bom_eq.setdefault(sap, [])
     if name not in eqs:
@@ -345,7 +351,7 @@ print(f'BOM export: {len(bom)} lines; main engine: {len(bom_scope)} SAP nos. on 
 def machines(lines, ref):
     """[[equipment no., name, BOM no., [item no., ref, item no., ref, ...]]]: equipment in file order, items by item no."""
     order, by = [], {}
-    for me, eqno, name, bomno, item, sap, desc, mk in lines:
+    for me, eqno, name, bomno, item, sap, desc, mk, mk2 in lines:
         if eqno not in by:
             by[eqno] = [eqno, name, bomno, []]
             order.append(eqno)
@@ -366,13 +372,15 @@ other = None
 if CFG['other_machinery']:
     ol = [l for l in bom if not l[0]]
     mats = {}
-    for me, eqno, name, bomno, item, sap, desc, mk in ol:
-        m = mats.setdefault(sap, [sap, desc, mk])
+    for me, eqno, name, bomno, item, sap, desc, mk, mk2 in ol:
+        m = mats.setdefault(sap, [sap, desc, mk, mk2])
         if m[1] != desc:
             warn.append(f'material {sap} has two descriptions')
         if not m[2] and mk:
             m[2] = mk
-    matlist = [mats[k] for k in sorted(mats)]
+        if not m[3] and mk2:
+            m[3] = mk2
+    matlist = [m if m[3] else m[:3] for m in (mats[k] for k in sorted(mats))]   # [SAP no., description, maker no.(, second maker no.)]
     mi = {m[0]: i for i, m in enumerate(matlist)}
     other = {'eq': machines(ol, lambda s: mi[s]), 'mat': matlist}
     print(f'other machinery: {len(ol)} lines on {len(other["eq"])} equipment, {len(matlist)} materials '
@@ -391,6 +399,27 @@ for s in specials:
     print(f"special: {s['title']} | {s['oe']} | Parker {s['parker']} | SAP {s['sap']}")
     if not s['sap']:
         warn.append(f"special entry {s['oe']} has no SAP no.")
+# The maker's part no. exactly as SAP stores it, for the pair shown beside every SAP material no.
+# sapmk[SAP no.] = [maker no. where SAP writes it differently from the number the app lists the material
+# under (e.g. an OE no. with an ending such as -251), second maker no. where SAP holds a different one]
+sapmk = {}
+def note_mk(sap, listed):
+    mk, mk2 = bom_mk.get(sap, ''), bom_mk2.get(sap, '')
+    if (mk and mk != listed) or mk2:
+        sapmk[sap] = [mk if mk != listed else '', mk2]
+for oe, lst in oesap.items():
+    for s in lst:
+        note_mk(s[0], oe)
+for c, lst in cmdsap.items():
+    for s in lst:
+        note_mk(s[0], c)
+for r in saprecs:
+    note_mk(r[2], r[1])
+for s in specials:
+    for x in s['sap']:
+        note_mk(x[0], s['oe'])
+print(f'maker part nos. as SAP writes them: {sum(1 for v in sapmk.values() if v[0])} differ from the listed number, '
+      f'{sum(1 for v in sapmk.values() if v[1])} have a second maker no.')
 lists[0]['note'] = ('The PDF text does not pair these numbers with the names. The SAP section below '
                     'shows what each number is. Confirm on this PDF page.')
 
@@ -421,7 +450,8 @@ if other:
                      'lines': sum(len(e[3]) // 2 for e in other['eq']), 'mats': len(other['mat'])}
 data = {'meta': meta, 'systems': [[s[0], s[1]] for s in SYSTEMS], 'chapters': chapters, 'spc': spc,
         'tools': tools, 'lists': lists, 'pages': pages, 'ygroups': ygroups,
-        'oesap': oesap, 'cmdsap': cmdsap, 'saprecs': saprecs, 'sapkinds': SAPKINDS, 'specials': specials}
+        'oesap': oesap, 'cmdsap': cmdsap, 'saprecs': saprecs, 'sapkinds': SAPKINDS, 'specials': specials,
+        'sapmk': sapmk}
 if mach:
     data['mach'] = mach
 plain = json.dumps(data, ensure_ascii=False, separators=(',', ':')).encode()

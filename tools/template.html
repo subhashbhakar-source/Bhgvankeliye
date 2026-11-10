@@ -79,9 +79,11 @@ main{padding-block:10px calc(env(safe-area-inset-bottom, 0px) + 24px);max-width:
 .card.exact{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .sapsec{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
 .saph{font-size:11px;font-weight:650;text-transform:uppercase;letter-spacing:.06em;color:var(--sap);margin-bottom:2px}
-.saprow{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-top:6px}
-.sapn{flex:1 1 170px;min-width:0;font-size:14px;word-break:break-word}
-.cmdl{font:600 13px/1.2 ui-monospace,"SF Mono",Menlo,monospace;color:var(--muted)}
+.saprow{display:flex;flex-direction:column;gap:5px;margin-top:8px}
+.pair{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch}
+.pair .id{min-width:0;overflow-wrap:anywhere}
+.id.none{color:var(--muted);cursor:default;font-weight:500}
+.sapn{min-width:0;font-size:14px;word-break:break-word}
 .sapsec .note{margin-top:8px}
 .fv .note{margin-top:6px}
 .card.special{border:2px solid var(--warn);background:linear-gradient(var(--warn-bg), var(--card) 70px)}
@@ -141,11 +143,11 @@ footer{color:var(--muted);font-size:11px;text-align:center;padding-block:8px 6px
 .chl i{font-style:normal;white-space:nowrap}
 .chl b{font:600 12.5px/1.2 ui-monospace,"SF Mono",Menlo,monospace;color:var(--ink)}
 .bom summary{font-size:14px;padding:4px 0}
-.brow{display:grid;grid-template-columns:3em max-content minmax(0,1fr);gap:2px 8px;align-items:start;padding:6px 0;border-top:1px solid var(--line);font-size:13px}
+.brow{display:grid;grid-template-columns:3em minmax(0,1fr);gap:2px 8px;align-items:start;padding:7px 0;border-top:1px solid var(--line);font-size:13px}
 .brow.bhead{color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;border-top:0;padding:6px 0 4px}
 .bit{font:600 13px/1.9 ui-monospace,"SF Mono",Menlo,monospace;color:var(--muted)}
 .id.bsap{font-size:13px;padding:4px 7px}
-.bds{min-width:0;word-break:break-word;padding-top:3px}
+.bds{min-width:0;word-break:break-word;padding-top:4px}
 .bomrows .more{margin-top:8px;padding:9px;font-size:14px}
 .legend{max-width:760px;margin:4px auto 6px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);font-size:13px;line-height:1.5}
 .lgh{font-size:11px;font-weight:650;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px}
@@ -314,7 +316,15 @@ function squashHit(hayS, hayB, st, alpha){
   return false;
 }
 const yardGroups = new Set(D.ygroups || []);
-const sapTxt = l => l.map(s => s[0] + ' ' + s[1]).join(' ');
+// SAP no. -> [maker part no. as SAP writes it, when that differs from the number the part is listed under
+// (e.g. an OE no. with an ending such as -251), second maker no. when SAP holds a different one]
+const SAPMK = Object.assign({}, D.sapmk || {});
+const mkTxt = sap => { const m = SAPMK[sap]; return m ? ' ' + m[0] + ' ' + m[1] : ''; };
+const sapTxt = l => l.map(s => s[0] + ' ' + s[1] + mkTxt(s[0])).join(' ');
+function mkExact(r, st){      // the maker part no. typed exactly as SAP writes it
+  const saps = r.sapno ? [r.sapno] : (r.sap || []).map(s => s[0]);
+  return saps.some(s => { const m = SAPMK[s]; return !!m && ((!!m[0] && squash(m[0]) === st) || (!!m[1] && squash(m[1]) === st)); });
+}
 function hasSap(r, n){
   if (r.sapno) return r.sapno === n;
   if (r.sap && r.sap.some(s => s[0] === n)) return true;
@@ -327,7 +337,7 @@ function index(r){
   else if (r.t === 'page') parts = [r.title, r.lines.join(' '), r.cmds.join(' '), r.list.id, r.cmds.map(n => sapTxt(CMDSAP[n] || [])).join(' ')];
   else if (r.t === 'special') parts = [r.name, r.sub, r.oe, r.parker, r.label, r.label.replace(/\s+/g, ''), r.details.join(' '), r.manual, sapTxt(r.sap), r.extra, r.tag];
   else if (r.t === 'eq') parts = [r.name, r.no, r.bom, 'machine equipment'];
-  else parts = [r.mk, r.sapno, r.name, r.kind, r.eq.join(' ')];
+  else parts = [r.mk, r.sapno, r.name, r.kind, r.eq.join(' '), mkTxt(r.sapno)];
   r.hay = norm(parts.join(' | '));
   r.hayB = squashB(r.hay);
   r.hayS = r.hayB.toLowerCase();
@@ -408,7 +418,7 @@ function search(q){
       else { ok = false; break; }
       if (r.oe && squash(r.oe) === st) score += 60;
       if (r.cmd === t || (r.cmds && r.cmds.indexOf(t) >= 0)) score += 60;
-      if (hasSap(r, t) || (r.mk && squash(r.mk) === st)) score += 60;
+      if (hasSap(r, t) || (r.mk && squash(r.mk) === st) || mkExact(r, st)) score += 60;
       if (r.parker && (squash(r.parker) === st || squash(r.label.replace(/\s*ELEMENT$/i, '')) === st)) score += 60;
       if (r.t === 'eq' && (r.no === t || r.bom === t)) score += 60;
       if ((r.grp && r.grp === t) || (r.gi && r.gi.indexOf(t) === 0)) score += 6;
@@ -443,13 +453,19 @@ function chainHtml(sap){      // Machinery view: where this material sits in SAP
     (c.length > 3 ? '<details><summary>' + (c.length - 3) + ' more machines use this part</summary>' + c.slice(3).map(x => chainOne(x, sap)).join('') + '</details>' : '') +
   '</div>';
 }
-function sapRow(s, toks, pre){
-  return '<div class="saprow">' + (pre || '') + chip('SAP material no.', s[0], 'sap', toks) + '<div class="sapn">' + brk(hl(s[1], toks)) + '</div></div>' + chainHtml(s[0]);
+const NOMK = '<span class="id none"><span class="lbl">Maker part no.</span>none in SAP</span>';
+function pairHtml(sap, mk, toks){   // the maker's part no. as SAP writes it, right beside the SAP material no.
+  const m = SAPMK[sap], shown = (m && m[0]) || mk || '';
+  return '<div class="pair">' + (shown ? chip('Maker part no.', shown, '', toks) : NOMK) + chip('SAP material no.', sap, 'sap', toks) + '</div>' +
+    (m && m[1] ? '<div class="sub">SAP also lists maker no. <b>' + hl(m[1], toks) + '</b></div>' : '');
 }
-function sapSection(list, toks){
+function sapRow(s, toks, mk){
+  return '<div class="saprow">' + pairHtml(s[0], mk, toks) + '<div class="sapn">' + brk(hl(s[1], toks)) + '</div></div>' + chainHtml(s[0]);
+}
+function sapSection(list, toks, mk){
   return '<div class="sapsec"><div class="saph">SAP</div>' +
     (list.length
-      ? list.map(s => sapRow(s, toks)).join('') +
+      ? list.map(s => sapRow(s, toks, mk)).join('') +
         (list.length > 1 ? '<div class="note">SAP has ' + list.length + ' materials on this part no. Check in SAP before raising the PR.</div>' : '')
       : '<div class="sub">' + NOSAP + '</div>') +
   '</div>';
@@ -472,7 +488,7 @@ function card(r, toks, exact){
         field('Item', 'Pos <b>' + esc(r.pos) + '</b> · Qty <b>' + esc(r.qty) + '</b>' + (r.lvl ? ' · ' + esc(r.lvl) : '') + (r.kg ? ' · ' + esc(r.kg) : '')) +
       '</div>' +
       (yardGroups.has(r.grp.slice(0, 4)) ? '<button class="link" data-goto="' + esc(r.grp.slice(0, 4)) + '">Yard CMD numbers for group ' + esc(r.grp.slice(0, 4)) + ' →</button>' : '') +
-      sapSection(r.sap, toks) +
+      sapSection(r.sap, toks, r.oe) +
     '</div>';
   }
   if (r.t === 'tool'){
@@ -485,7 +501,7 @@ function card(r, toks, exact){
         field('Manual', 'List of Tools 50043150, page <b>' + esc(r.page) + '</b>') +
         field('Item', 'Group item <b>' + h(r.gi) + '</b>' + (r.qty ? ' · Qty <b>' + esc(r.qty) + '</b>' : '') + (r.kg ? ' · ' + esc(r.kg) + ' kg' : '')) +
       '</div>' +
-      (r.cmd ? sapSection(r.sap, toks) : '') +
+      (r.cmd ? sapSection(r.sap, toks, r.cmd) : '') +
     '</div>';
   }
   if (r.t === 'special'){
@@ -500,7 +516,7 @@ function card(r, toks, exact){
         field('Manual', '<span class="sub">' + h(r.manual) + '</span>' +
           (r.photo ? '<button class="photo" data-zoom="1" aria-label="Enlarge box label photo"><img src="' + r.photo + '" alt="' + esc(r.cap) + '"></button>' : '')) +
       '</div>' +
-      sapSection(r.sap, toks) +
+      sapSection(r.sap, toks, r.oe) +
     '</div>';
   }
   if (r.t === 'eq'){
@@ -514,22 +530,21 @@ function card(r, toks, exact){
     '</div>';
   }
   if (r.t === 'sap'){
-    const lbl = ['OE part no.', 'CMD yard no.', 'WinGD ID no.', 'Maker no.', ''][r.k] || 'Maker no.';
     const eqs = (OPT.other && r.eqO) ? r.eq.concat(r.eqO) : r.eq;
     return top + (r.other ? (exact ? ' ' : '') + '<div class="tag mtag">Other machinery</div>' : '') + '<div class="src">' + esc(r.kind) + '</div>' +
-      (r.mk ? '<div class="ids">' + chip(lbl, r.mk, '', toks) + '</div>' : '') +
       ((eqs.length || r.k === 0) ? '<div class="fields">' +
         (eqs.length ? field('System', eqs.map(x => '<div><b>' + h(x) + '</b></div>').join('')) : '') +
         (r.k === 0 ? field('Manual', '<span class="sub">This OE no. is not in the X72DF-2.1 Spare Parts Catalogue.</span>') : '') +
       '</div>' : '') +
-      sapSection([[r.sapno, r.name]], toks) +
+      sapSection([[r.sapno, r.name]], toks, r.mk) +
     '</div>';
   }
   const hit = toks.length ? r.lines.filter(l => toks.some(t => norm(l).indexOf(t) >= 0)) : [];
   const lines = (hit.length ? hit : r.lines).slice(0, 8);
   const sapRows = r.cmds.map(n => {
-    const s = CMDSAP[n] || [], pre = '<span class="cmdl">CMD ' + hl(n, toks) + '</span>';
-    return s.length ? s.map(x => sapRow(x, toks, pre)).join('') : '<div class="saprow">' + pre + '<span class="sub">Not on the SAP equipment BOM</span></div>';
+    const s = CMDSAP[n] || [];
+    return s.length ? s.map(x => sapRow(x, toks, n)).join('')
+      : '<div class="saprow"><div class="pair">' + chip('Maker part no.', n, '', toks) + '</div><div class="sub">Not on the SAP equipment BOM</div></div>';
   }).join('');
   return top + '<div class="src">' + esc(r.list.name) + '</div>' +
     '<div class="name">' + h(r.title) + '</div>' +
@@ -578,7 +593,7 @@ function render(){
   }
   const qs = squash(q), qt = q.trim();
   const isExact = r => (r.oe && squash(r.oe) === qs) || r.cmd === qt || (r.cmds && r.cmds.indexOf(qt) >= 0) ||
-    hasSap(r, qt) || (r.mk && squash(r.mk) === qs) || (r.parker && (squash(r.parker) === qs || squash(r.label.replace(/\s*ELEMENT$/i, '')) === qs)) ||
+    hasSap(r, qt) || (r.mk && squash(r.mk) === qs) || mkExact(r, qs) || (r.parker && (squash(r.parker) === qs || squash(r.label.replace(/\s*ELEMENT$/i, '')) === qs)) ||
     (r.t === 'eq' && (r.no === qt || r.bom === qt));
   $out.innerHTML = res.slice(0, shown).map(r => card(r, toks, isExact(r))).join('') + (res.length > shown ? moreBtn(res.length - shown) : '');
 }
@@ -596,11 +611,13 @@ $('optMach').addEventListener('click', () => setMach(!OPT.mach));
 const BOMPAGE = 150;
 function bomFill(d, from){      // rows of one machine's parts list, a page at a time
   const e = EQS[+d.dataset.eq], box = d.querySelector('.bomrows');
-  let h = from ? '' : '<div class="brow bhead"><span>Item no.</span><span>Material no.</span><span>Name · maker no.</span></div>';
+  let h = from ? '' : '<div class="brow bhead"><span>Item no.</span><span>Material no. · maker part no. · name</span></div>';
   for (const it of e.items.slice(from, from + BOMPAGE)){
-    const info = SAPINFO.get(it[1]) || ['', ''];
-    h += '<div class="brow"><span class="bit">' + pad4(it[0]) + '</span><button class="id sap bsap" data-copy="' + it[1] + '">' + it[1] + '</button>' +
-      '<span class="bds">' + brk(esc(info[0])) + (info[1] ? '<br><span class="sub">' + esc(info[1]) + '</span>' : '') + '</span></div>';
+    const info = SAPINFO.get(it[1]) || ['', ''], m = SAPMK[it[1]], mk = (m && m[0]) || info[1];
+    h += '<div class="brow"><span class="bit">' + pad4(it[0]) + '</span><div><div class="pair">' +
+      '<button class="id sap bsap" data-copy="' + it[1] + '">' + it[1] + '</button>' +
+      (mk ? '<button class="id bsap" data-copy="' + esc(mk) + '">' + esc(mk) + '</button>' : '<span class="id bsap none">no maker no.</span>') + '</div>' +
+      '<div class="bds">' + brk(esc(info[0])) + (m && m[1] ? ' <span class="sub">· SAP also lists ' + esc(m[1]) + '</span>' : '') + '</div></div></div>';
   }
   const left = e.items.length - from - BOMPAGE;
   if (left > 0) h += '<button class="more" data-bommore="' + (from + BOMPAGE) + '">Show more (' + left.toLocaleString() + ' left)</button>';
@@ -701,7 +718,7 @@ function loadOther(){
       if (!u8) return false;
       const o = await openBlob(u8);                       // {eq: machines, mat: [[SAP no., description, maker no.]]}
       const mainSap = new Set(SAPINFO.keys()), shared = new Map();
-      for (const m of o.mat) if (!mainSap.has(m[0])) SAPINFO.set(m[0], [m[1], m[2]]);
+      for (const m of o.mat) if (!mainSap.has(m[0])){ SAPINFO.set(m[0], [m[1], m[2]]); if (m[3]) SAPMK[m[0]] = ['', m[3]]; }
       addMachines(o.eq, true, i => o.mat[i][0]);
       for (const m of o.mat){
         const names = Array.from(new Set((CHAIN.get(m[0]) || []).filter(x => x[0].other).map(x => x[0].name)));

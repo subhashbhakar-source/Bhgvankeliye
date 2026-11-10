@@ -1,7 +1,7 @@
 // Offline cache. VERSION changes with every build, so phones fetch the new page.
 // The page itself keeps the other machinery file in its own cache (KEEP), which
 // survives updates: that file is only downloaded again when its data changes.
-const VERSION = 'xdf-parts-20f4414b2c';
+const VERSION = 'xdf-parts-bd58700c83';
 const KEEP = ['xdf-other'];
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => {
