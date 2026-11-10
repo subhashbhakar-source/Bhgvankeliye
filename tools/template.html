@@ -18,21 +18,21 @@
   --bg:#f4f6f8; --card:#ffffff; --ink:#0f1720; --muted:#5b6672; --line:#dde3e9;
   --accent:#0b6bcb; --accent-ink:#ffffff; --chip:#eaf1fa; --sap:#0a7a45; --sap-bg:#e6f5ec;
   --warn:#8a4b00; --warn-bg:#fbefdf; --hl:#fff2a8; --err:#b42318;
-  --scrim:rgba(0,0,0,.86);
+  --scrim:rgba(0,0,0,.86); --track:#aeb9c4; --knob:#ffffff;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#0f1720; --card:#17212c; --ink:#e8edf2; --muted:#93a1af; --line:#263342;
     --accent:#4ea3ff; --accent-ink:#06121f; --chip:#1d2b3a; --sap:#5fd49a; --sap-bg:#123326;
-    --warn:#ffb866; --warn-bg:#3a2a14; --hl:#5c4d00; --err:#ff8a80;
+    --warn:#ffb866; --warn-bg:#3a2a14; --hl:#5c4d00; --err:#ff8a80; --track:#3d4d60; --knob:#e8edf2;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"]{
   --bg:#0f1720; --card:#17212c; --ink:#e8edf2; --muted:#93a1af; --line:#263342;
   --accent:#4ea3ff; --accent-ink:#06121f; --chip:#1d2b3a; --sap:#5fd49a; --sap-bg:#123326;
-  --warn:#ffb866; --warn-bg:#3a2a14; --hl:#5c4d00; --err:#ff8a80;
+  --warn:#ffb866; --warn-bg:#3a2a14; --hl:#5c4d00; --err:#ff8a80; --track:#3d4d60; --knob:#e8edf2;
   color-scheme: dark;
 }
 *{box-sizing:border-box}
@@ -126,6 +126,32 @@ footer{color:var(--muted);font-size:11px;text-align:center;padding-block:8px 6px
 .lockbox button{width:100%;margin-top:10px;font-size:17px;padding:12px;border-radius:12px;border:0;
   background:var(--accent);color:var(--accent-ink);font-weight:600}
 .lockbox .err{color:var(--err);min-height:20px}
+.filters.wrap{flex-wrap:wrap;overflow:visible}
+.opts{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:8px}
+.sw{display:inline-flex;align-items:center;gap:8px;border:0;background:none;color:var(--ink);font-size:14px;padding:3px 0;cursor:pointer}
+.sw .track{flex:none;width:38px;height:22px;border-radius:999px;background:var(--track);position:relative;transition:background .15s}
+.sw .track::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--knob);transition:transform .15s}
+.sw[aria-checked="true"] .track{background:var(--accent)}
+.sw[aria-checked="true"] .track::after{transform:translateX(16px)}
+@media (prefers-reduced-motion: reduce){.sw .track,.sw .track::after{transition:none}}
+.tag.mtag{background:var(--chip);color:var(--ink)}
+.chain{display:flex;flex-direction:column;gap:6px;margin:6px 0 2px}
+.chn{font-size:13px;line-height:1.4;padding:7px 9px;border-radius:8px;background:var(--chip);word-break:break-word}
+.chl{color:var(--muted);margin-top:2px}
+.chl i{font-style:normal;white-space:nowrap}
+.chl b{font:600 12.5px/1.2 ui-monospace,"SF Mono",Menlo,monospace;color:var(--ink)}
+.bom summary{font-size:14px;padding:4px 0}
+.brow{display:grid;grid-template-columns:3em max-content minmax(0,1fr);gap:2px 8px;align-items:start;padding:6px 0;border-top:1px solid var(--line);font-size:13px}
+.brow.bhead{color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;border-top:0;padding:6px 0 4px}
+.bit{font:600 13px/1.9 ui-monospace,"SF Mono",Menlo,monospace;color:var(--muted)}
+.id.bsap{font-size:13px;padding:4px 7px}
+.bds{min-width:0;word-break:break-word;padding-top:3px}
+.bomrows .more{margin-top:8px;padding:9px;font-size:14px}
+.legend{max-width:760px;margin:4px auto 6px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);font-size:13px;line-height:1.5}
+.lgh{font-size:11px;font-weight:650;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:4px}
+.lgr{display:grid;grid-template-columns:8.4em minmax(0,1fr);gap:8px}
+.offl .xl{display:block;color:var(--muted);font-weight:400;margin-top:3px}
+.offl .xl.ok{color:var(--sap);font-weight:600}
 </style>
 </head>
 <body>
@@ -154,10 +180,22 @@ footer{color:var(--muted);font-size:11px;text-align:center;padding-block:8px 6px
       <button data-f="spc" aria-pressed="false">WinGD (OE)</button>
       <button data-f="yard" aria-pressed="false">Yard (CMD)</button>
       <button data-f="sap" aria-pressed="false">Other SAP</button>
+      <button data-f="eq" aria-pressed="false" id="chipEq" hidden>Machines</button>
+    </div>
+    <div class="opts" id="opts" hidden>
+      <button class="sw" id="optOther" type="button" role="switch" aria-checked="false" hidden><span class="track"></span>Other machinery</button>
+      <button class="sw" id="optMach" type="button" role="switch" aria-checked="false" hidden><span class="track"></span>Machinery view</button>
     </div>
     <div id="status" aria-live="polite"></div>
   </header>
   <main id="out"></main>
+  <div id="legend" class="legend" hidden>
+    <div class="lgh">How SAP lists machinery</div>
+    <div class="lgr"><b>Equipment</b><span>the machine</span></div>
+    <div class="lgr"><b>→ BOM</b><span>its parts list</span></div>
+    <div class="lgr"><b>→ Item no.</b><span>the line in the list</span></div>
+    <div class="lgr"><b>→ Material no.</b><span>the actual part you order and keep in stock</span></div>
+  </div>
   <footer id="foot"></footer>
   <div id="offline" class="offl" role="status" aria-live="polite"></div>
 </div>
@@ -165,6 +203,7 @@ footer{color:var(--muted);font-size:11px;text-align:center;padding-block:8px 6px
 <div id="toast"></div>
 
 <script id="data" type="application/json">/*DATA*/</script>
+<!--OTHER-->
 <script>
 (async function(){
 "use strict";
@@ -188,6 +227,12 @@ async function decrypt(raw){
   const stream = new Blob([pt]).stream().pipeThrough(new DecompressionStream('gzip'));
   return JSON.parse(await new Response(stream).text());
 }
+async function openBlob(u8){   // a separate data file: 12-byte IV, then AES-GCM of gzip(JSON), same key as the page
+  const key = await crypto.subtle.importKey('raw', rawKey, 'AES-GCM', false, ['decrypt']);
+  const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:u8.slice(0, 12)}, key, u8.slice(12));
+  const stream = new Blob([pt]).stream().pipeThrough(new DecompressionStream('gzip'));
+  return JSON.parse(await new Response(stream).text());
+}
 function unlock(){
   return new Promise(resolve => {
     $('lock').hidden = false;
@@ -200,6 +245,7 @@ function unlock(){
       try {
         const raw = await deriveRaw($('code').value);
         const d = await decrypt(raw);
+        rawKey = raw;
         save(KEYNAME, toB64(raw));
         $('lock').hidden = true;
         resolve(d);
@@ -208,9 +254,9 @@ function unlock(){
   });
 }
 
-let D = null;
+let D = null, rawKey = null;
 const saved = load(KEYNAME);
-if (saved){ try { D = await decrypt(b64(saved)); } catch(_) { save(KEYNAME, null); } }
+if (saved){ try { rawKey = b64(saved); D = await decrypt(rawKey); } catch(_) { D = null; rawKey = null; save(KEYNAME, null); } }
 if (!D) D = await unlock();
 $('app').hidden = false;
 if (window.xdfOfflineRefresh) window.xdfOfflineRefresh();
@@ -238,7 +284,35 @@ for (const r of (D.saprecs || []))
   rows.push({t:'sap', k:r[0], kind:SAPK[r[0]], mk:r[1], sapno:r[2], name:r[3], eq:r[4] || []});
 
 const norm = s => String(s == null ? '' : s).toLowerCase();
-const squash = s => norm(s).replace(/[^a-z0-9一-鿿]/g, '');
+const squash = s => norm(s).replace(/[^a-z0-9\u4e00-\u9fff]/g, '');
+// squash(), but with the first letter of every word in upper case. A search word made only of letters and
+// typed without punctuation ("oring" for O-RING) must start where a word starts, so it cannot match inside
+// another word ("mooring"). Words with digits (part numbers) may still match anywhere.
+function squashB(s){
+  let out = '', start = true;
+  for (let i = 0; i < s.length; i++){
+    const c = s.charCodeAt(i);
+    if ((c >= 97 && c <= 122) || (c >= 48 && c <= 57) || (c >= 0x4e00 && c <= 0x9fff)){
+      out += (start && c >= 97 && c <= 122) ? String.fromCharCode(c - 32) : s[i];
+      start = false;
+    } else start = true;
+  }
+  return out;
+}
+function wordStart(hay, i){
+  const c = hay.charCodeAt(i - 1);
+  return !((c >= 97 && c <= 122) || (c >= 48 && c <= 57) || (c >= 0x4e00 && c <= 0x9fff));
+}
+function squashHit(hayS, hayB, st, alpha){
+  let i = hayS.indexOf(st);
+  if (!alpha) return i >= 0;
+  while (i >= 0){
+    const c = hayB.charCodeAt(i);
+    if (c >= 65 && c <= 90) return true;
+    i = hayS.indexOf(st, i + 1);
+  }
+  return false;
+}
 const yardGroups = new Set(D.ygroups || []);
 const sapTxt = l => l.map(s => s[0] + ' ' + s[1]).join(' ');
 function hasSap(r, n){
@@ -246,21 +320,58 @@ function hasSap(r, n){
   if (r.sap && r.sap.some(s => s[0] === n)) return true;
   return !!(r.cmds && r.cmds.some(c => (CMDSAP[c] || []).some(s => s[0] === n)));
 }
-for (const r of rows){
+function index(r){
   let parts;
   if (r.t === 'spc') parts = [r.oe, r.name, r.rem, r.asm, r.grp, r.title, r.pos, r.sys ? r.sys[1] : '', sapTxt(r.sap)];
   else if (r.t === 'tool') parts = [r.cmd, r.dwg, r.name, r.gi, 'tool tools 50043150', sapTxt(r.sap)];
   else if (r.t === 'page') parts = [r.title, r.lines.join(' '), r.cmds.join(' '), r.list.id, r.cmds.map(n => sapTxt(CMDSAP[n] || [])).join(' ')];
   else if (r.t === 'special') parts = [r.name, r.sub, r.oe, r.parker, r.label, r.label.replace(/\s+/g, ''), r.details.join(' '), r.manual, sapTxt(r.sap), r.extra, r.tag];
+  else if (r.t === 'eq') parts = [r.name, r.no, r.bom, 'machine equipment'];
   else parts = [r.mk, r.sapno, r.name, r.kind, r.eq.join(' ')];
   r.hay = norm(parts.join(' | '));
-  r.hayS = squash(parts.join(''));
+  r.hayB = squashB(r.hay);
+  r.hayS = r.hayB.toLowerCase();
+  return r;
 }
-$('count').textContent = rows.length.toLocaleString() + ' entries';
+rows.forEach(index);
+const MAIN_N = rows.length;
+
+// ---------- machinery: equipment (the machine) -> BOM (its parts list) -> item no. -> material no. ----------
+// D.mach: [[equipment no., name, BOM no., [item no., SAP no., item no., SAP no., ...]]] for the main engine.
+// Other machinery has the same shape in its own file (see loadOther), with material indexes in place of SAP nos.
+const HAS_MACH = !!D.mach, OTHER = (D.meta && D.meta.other) || null;
+const OPT = {other: !!OTHER && load('xdf-opt-other') === '1', mach: HAS_MACH && load('xdf-opt-mach') === '1'};
+const EQS = [], CHAIN = new Map(), SAPINFO = new Map();
+const pad4 = n => String(n).padStart(4, '0');
+for (const k in OESAP) for (const s of OESAP[k]) SAPINFO.set(s[0], [s[1], k]);
+for (const k in CMDSAP) for (const s of CMDSAP[k]) SAPINFO.set(s[0], [s[1], k]);
+for (const r of (D.saprecs || [])) SAPINFO.set(r[2], [r[3], r[1]]);
+for (const s of (D.specials || [])) for (const x of (s.sap || [])) SAPINFO.set(x[0], [x[1], s.oe]);
+function addMachines(list, other, sapOf){
+  for (const m of list){
+    const e = {t:'eq', idx:EQS.length, no:m[0], name:m[1], bom:m[2], other, items:[]};
+    for (let i = 0; i < m[3].length; i += 2){
+      const sap = sapOf(m[3][i + 1]);
+      e.items.push([m[3][i], sap]);
+      let c = CHAIN.get(sap);
+      if (!c) CHAIN.set(sap, c = []);
+      c.push([e, m[3][i]]);
+    }
+    EQS.push(e);
+    rows.push(index(e));
+  }
+}
+if (HAS_MACH) addMachines(D.mach, false, s => s);
+const inMode = r => !(r.other && !OPT.other) && !(r.t === 'eq' && !OPT.mach);
+function updateCount(){
+  let n = 0;
+  for (const r of rows) if (inMode(r)) n++;
+  $('count').textContent = n.toLocaleString() + ' entries';
+  return n;
+}
 $('foot').innerHTML = esc(D.meta.source) +
   (D.oesap ? '<br>SAP material numbers are from the ME1 equipment BOM. The same SAP no. applies to ME2 (both 5X72DF-2.1).' : '') +
-  '<br>Data built ' + esc(D.meta.built) +
-  '. Always confirm a number on the catalogue or list page before ordering.' +
+  '<br>Always confirm a number on the catalogue or list page before ordering.' +
   '<br><button class="link" id="forget">Forget access code on this device</button>';
 
 const exPart = rows.find(r => r.t === 'spc' && r.sap.length === 1 && r.grp === '5556') || rows.find(r => r.t === 'spc' && r.sap.length === 1);
@@ -279,24 +390,35 @@ function search(q){
   const toks = norm(q).split(/\s+/).filter(Boolean);
   const res = [];
   for (const r of rows){
+    if (!inMode(r)) continue;
     if (filter === 'spc' && r.t !== 'spc' && r.t !== 'special') continue;
     if (filter === 'yard' && r.t !== 'tool' && r.t !== 'page') continue;
     if (filter === 'sap' && r.t !== 'sap' && r.t !== 'special') continue;
+    if (filter === 'eq' && r.t !== 'eq') continue;
+    const more = OPT.other && r.hayO, hay = more ? r.hay + r.hayO : r.hay;
+    const hayB = more ? r.hayB + r.hayOB : r.hayB, hayS = more ? r.hayS + r.hayOS : r.hayS;
     let ok = true, score = 0;
     for (const t of toks){
-      const st = squash(t);
-      const i = r.hay.indexOf(t);
-      if (i >= 0) score += (i === 0 ? 3 : 1);
-      else if (st.length >= 3 && r.hayS.indexOf(st) >= 0) score += 2;
+      const st = squash(t), alpha = /^[a-z]+$/.test(st);
+      const i = hay.indexOf(t);
+      let viaSquash = false;
+      if (i === 0) score += 3;
+      else if (i > 0) score += wordStart(hay, i) ? 2 : 1;          // a whole-word start ranks above a match inside a word
+      else if (st.length >= 3 && squashHit(hayS, hayB, st, alpha)){ score += 2; viaSquash = true; }
       else { ok = false; break; }
       if (r.oe && squash(r.oe) === st) score += 60;
       if (r.cmd === t || (r.cmds && r.cmds.indexOf(t) >= 0)) score += 60;
       if (hasSap(r, t) || (r.mk && squash(r.mk) === st)) score += 60;
       if (r.parker && (squash(r.parker) === st || squash(r.label.replace(/\s*ELEMENT$/i, '')) === st)) score += 60;
+      if (r.t === 'eq' && (r.no === t || r.bom === t)) score += 60;
       if ((r.grp && r.grp === t) || (r.gi && r.gi.indexOf(t) === 0)) score += 6;
-      if (r.name && norm(r.name).indexOf(t) >= 0) score += 2;
+      if (r.name){
+        const nm = norm(r.name);
+        if (nm.indexOf(t) >= 0) score += 2;
+        else if (viaSquash){ const nb = squashB(nm); if (squashHit(nb.toLowerCase(), nb, st, alpha)) score += 2; }
+      }
     }
-    if (ok) res.push([score + (r.t === 'special' ? 100 : 0), r]);
+    if (ok) res.push([score + (r.t === 'special' ? 100 : 0) + (r.t === 'eq' ? 40 : 0), r]);
   }
   res.sort((a, b) => b[0] - a[0]);
   return {toks, res: res.map(x => x[1])};
@@ -308,8 +430,21 @@ function field(label, html){ return '<div class="fl">' + label + '</div><div cla
 function sysName(s){ return s ? '<b>' + esc(s[1]) + '</b> <span class="sub">(chapter ' + s[0] + ')</span>' : ''; }
 const NOSAP = 'Not on the SAP equipment BOM. Search SAP (MM60 / Fiori) with the part no. and name.';
 const brk = s => s.replace(/,/g, ',<wbr>');
+function chainOne(x, sap){
+  return '<div class="chn"><b>' + esc(x[0].name) + '</b>' + (x[0].other ? ' <span class="sub">other machinery</span>' : '') +
+    '<div class="chl"><i>Equipment <b>' + x[0].no + '</b></i> → <i>BOM <b>' + x[0].bom + '</b></i> → <i>Item no. <b>' + pad4(x[1]) +
+    '</b></i> → <i>Material no. <b>' + sap + '</b></i></div></div>';
+}
+function chainHtml(sap){      // Machinery view: where this material sits in SAP
+  if (!OPT.mach) return '';
+  const c = (CHAIN.get(sap) || []).filter(x => OPT.other || !x[0].other);
+  if (!c.length) return '';
+  return '<div class="chain">' + c.slice(0, 3).map(x => chainOne(x, sap)).join('') +
+    (c.length > 3 ? '<details><summary>' + (c.length - 3) + ' more machines use this part</summary>' + c.slice(3).map(x => chainOne(x, sap)).join('') + '</details>' : '') +
+  '</div>';
+}
 function sapRow(s, toks, pre){
-  return '<div class="saprow">' + (pre || '') + chip('SAP material no.', s[0], 'sap', toks) + '<div class="sapn">' + brk(hl(s[1], toks)) + '</div></div>';
+  return '<div class="saprow">' + (pre || '') + chip('SAP material no.', s[0], 'sap', toks) + '<div class="sapn">' + brk(hl(s[1], toks)) + '</div></div>' + chainHtml(s[0]);
 }
 function sapSection(list, toks){
   return '<div class="sapsec"><div class="saph">SAP</div>' +
@@ -368,12 +503,23 @@ function card(r, toks, exact){
       sapSection(r.sap, toks) +
     '</div>';
   }
+  if (r.t === 'eq'){
+    return '<div class="card' + (exact ? ' exact' : '') + '">' + (exact ? '<div class="tag">Exact match</div> ' : '') +
+      '<div class="tag mtag">Machine</div>' +
+      '<div class="src">SAP equipment · ' + (r.other ? 'other machinery' : 'main engine') + '</div>' +
+      '<div class="name">' + h(r.name) + '</div>' +
+      '<div class="ids">' + chip('Equipment no.', r.no, '', toks) + chip('BOM no.', r.bom, '', toks) + '</div>' +
+      '<details class="bom" data-eq="' + r.idx + '"><summary>Parts list (BOM): ' + r.items.length.toLocaleString() +
+        (r.items.length === 1 ? ' item' : ' items') + '</summary><div class="bomrows"></div></details>' +
+    '</div>';
+  }
   if (r.t === 'sap'){
     const lbl = ['OE part no.', 'CMD yard no.', 'WinGD ID no.', 'Maker no.', ''][r.k] || 'Maker no.';
-    return top + '<div class="src">' + esc(r.kind) + '</div>' +
+    const eqs = (OPT.other && r.eqO) ? r.eq.concat(r.eqO) : r.eq;
+    return top + (r.other ? (exact ? ' ' : '') + '<div class="tag mtag">Other machinery</div>' : '') + '<div class="src">' + esc(r.kind) + '</div>' +
       (r.mk ? '<div class="ids">' + chip(lbl, r.mk, '', toks) + '</div>' : '') +
-      ((r.eq.length || r.k === 0) ? '<div class="fields">' +
-        (r.eq.length ? field('System', r.eq.map(x => '<div><b>' + h(x) + '</b></div>').join('')) : '') +
+      ((eqs.length || r.k === 0) ? '<div class="fields">' +
+        (eqs.length ? field('System', eqs.map(x => '<div><b>' + h(x) + '</b></div>').join('')) : '') +
         (r.k === 0 ? field('Manual', '<span class="sub">This OE no. is not in the X72DF-2.1 Spare Parts Catalogue.</span>') : '') +
       '</div>' : '') +
       sapSection([[r.sapno, r.name]], toks) +
@@ -399,32 +545,42 @@ function card(r, toks, exact){
     (sapRows ? '<div class="sapsec"><div class="saph">SAP</div>' + sapRows + '</div>' : '') +
   '</div>';
 }
+const moreBtn = left => '<button class="more" id="more">Show more (' + left.toLocaleString() + ' left)</button>';
 function render(){
   const q = $q.value.trim();
   $clr.hidden = !q;
+  const n = updateCount(), scope = OPT.other ? ' · other machinery included' : '';
+  if (q.length < 2 && filter === 'eq'){          // the list of machines
+    const list = EQS.filter(inMode).sort((a, b) => (a.other - b.other) || a.name.localeCompare(b.name));
+    $st.textContent = list.length.toLocaleString() + ' machines' + (OPT.other ? scope : ' · main engine');
+    $out.innerHTML = list.slice(0, shown).map(r => card(r, [], false)).join('') + (list.length > shown ? moreBtn(list.length - shown) : '');
+    return;
+  }
   if (q.length < 2){
-    $st.textContent = '';
+    $st.textContent = OPT.other ? 'Other machinery included' : '';
     const pinned = rows.filter(r => r.t === 'special');
     $out.innerHTML = (pinned.length ? '<h2 class="pinh">Frequent orders</h2>' + pinned.map(r => card(r, [], false)).join('') : '') +
-      '<div class="empty"><p><b>Search ' + rows.length.toLocaleString() + ' parts, tools and yard list pages.</b></p>' +
+      '<div class="empty"><p><b>Search ' + n.toLocaleString() + ' parts, tools and yard list pages.</b></p>' +
       '<p class="tip">Type a name, an OE no., a SAP no., a CMD no. or a group. Try one of these:</p><div class="ex">' +
       EXAMPLES.map(x =>
         '<button data-ex="' + esc(x) + '">' + esc(x) + '</button>').join('') +
-      '</div><p class="tip">Words can be in any order. Tap a number to copy it.</p></div>';
+      '</div><p class="tip">Words can be in any order. Tap a number to copy it.</p>' +
+      (OPT.mach ? '<p class="tip">Machinery view is on. Tap <b>Machines</b> for the list of machines, or type a machine name.</p>' : '') +
+      '</div>';
     return;
   }
   const {toks, res} = search(q);
-  $st.textContent = res.length.toLocaleString() + (res.length === 1 ? ' match' : ' matches');
+  $st.textContent = res.length.toLocaleString() + (res.length === 1 ? ' match' : ' matches') + scope;
   if (!res.length){
-    $out.innerHTML = '<div class="empty"><p>No match.</p><p class="tip">Try fewer words or part of the number.</p></div>';
+    $out.innerHTML = '<div class="empty"><p>No match.</p><p class="tip">Try fewer words or part of the number.</p>' +
+      (OTHER && !OPT.other ? '<p class="tip">Other machinery is switched off.</p>' : '') + '</div>';
     return;
   }
   const qs = squash(q), qt = q.trim();
   const isExact = r => (r.oe && squash(r.oe) === qs) || r.cmd === qt || (r.cmds && r.cmds.indexOf(qt) >= 0) ||
-    hasSap(r, qt) || (r.mk && squash(r.mk) === qs) || (r.parker && (squash(r.parker) === qs || squash(r.label.replace(/\s*ELEMENT$/i, '')) === qs));
-  let html = res.slice(0, shown).map(r => card(r, toks, isExact(r))).join('');
-  if (res.length > shown) html += '<button class="more" id="more">Show more (' + (res.length - shown).toLocaleString() + ' left)</button>';
-  $out.innerHTML = html;
+    hasSap(r, qt) || (r.mk && squash(r.mk) === qs) || (r.parker && (squash(r.parker) === qs || squash(r.label.replace(/\s*ELEMENT$/i, '')) === qs)) ||
+    (r.t === 'eq' && (r.no === qt || r.bom === qt));
+  $out.innerHTML = res.slice(0, shown).map(r => card(r, toks, isExact(r))).join('') + (res.length > shown ? moreBtn(res.length - shown) : '');
 }
 function setFilter(f){
   filter = f;
@@ -435,8 +591,29 @@ $q.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() 
 $q.addEventListener('keydown', e => { if (e.key === 'Enter') $q.blur(); });
 $clr.addEventListener('click', () => { $q.value = ''; render(); $q.focus(); });
 document.querySelectorAll('.filters button').forEach(b => b.addEventListener('click', () => { setFilter(b.dataset.f); shown = 50; render(); }));
+$('optOther').addEventListener('click', () => setOther(!OPT.other));
+$('optMach').addEventListener('click', () => setMach(!OPT.mach));
+const BOMPAGE = 150;
+function bomFill(d, from){      // rows of one machine's parts list, a page at a time
+  const e = EQS[+d.dataset.eq], box = d.querySelector('.bomrows');
+  let h = from ? '' : '<div class="brow bhead"><span>Item no.</span><span>Material no.</span><span>Name · maker no.</span></div>';
+  for (const it of e.items.slice(from, from + BOMPAGE)){
+    const info = SAPINFO.get(it[1]) || ['', ''];
+    h += '<div class="brow"><span class="bit">' + pad4(it[0]) + '</span><button class="id sap bsap" data-copy="' + it[1] + '">' + it[1] + '</button>' +
+      '<span class="bds">' + brk(esc(info[0])) + (info[1] ? '<br><span class="sub">' + esc(info[1]) + '</span>' : '') + '</span></div>';
+  }
+  const left = e.items.length - from - BOMPAGE;
+  if (left > 0) h += '<button class="more" data-bommore="' + (from + BOMPAGE) + '">Show more (' + left.toLocaleString() + ' left)</button>';
+  box.insertAdjacentHTML('beforeend', h);
+}
+$out.addEventListener('toggle', e => {
+  const d = e.target;
+  if (d && d.classList && d.classList.contains('bom') && d.open && !d.dataset.done){ d.dataset.done = '1'; bomFill(d, 0); }
+}, true);
 $out.addEventListener('click', e => {
   if (e.target.id === 'more'){ shown += 100; render(); return; }
+  const bm = e.target.closest('[data-bommore]');
+  if (bm){ const d = bm.closest('details.bom'), from = +bm.dataset.bommore; bm.remove(); bomFill(d, from); return; }
   const z = e.target.closest('[data-zoom]');
   if (z){ const im = z.querySelector('img'); $('zoomimg').src = im.src; $('zoomimg').alt = im.alt; $('zoom').hidden = false; return; }
   const ex = e.target.closest('[data-ex]');
@@ -459,22 +636,151 @@ function fallback(v, done){
   try { document.execCommand('copy'); done(); } catch(_) {} t.remove();
 }
 let tt;
-function toast(m){ const el = $('toast'); el.textContent = m; el.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => el.classList.remove('on'), 1400); }
+function toast(m, ms){ const el = $('toast'); el.textContent = m; el.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => el.classList.remove('on'), ms || 1400); }
+
+// ---------- the two switches ----------
+function syncOpts(){
+  $('optOther').setAttribute('aria-checked', OPT.other ? 'true' : 'false');
+  $('optMach').setAttribute('aria-checked', OPT.mach ? 'true' : 'false');
+  $('chipEq').hidden = !OPT.mach;
+  $('legend').hidden = !OPT.mach;
+  document.querySelector('.filters').classList.toggle('wrap', OPT.mach);
+}
+function setMach(on){
+  OPT.mach = on;
+  save('xdf-opt-mach', on ? '1' : null);
+  if (!on && filter === 'eq') setFilter('all');
+  syncOpts(); shown = 50; render();
+}
+async function setOther(on){
+  if (on && !otherData){
+    OPT.other = true; syncOpts();
+    $st.textContent = 'Loading other machinery…';
+    if (!(await loadOther())){
+      on = false;
+      toast('Other machinery is not on this phone yet. Connect to the internet once.', 4500);
+    }
+  }
+  OPT.other = on;
+  save('xdf-opt-other', on ? '1' : null);
+  syncOpts(); shown = 50; render(); bottom();
+}
+
+// ---------- other machinery: its own encrypted file, kept in its own cache ----------
+// Removing the feature (tools/config.json, "other_machinery": false) drops D.meta.other; the page then
+// hides the switch and deletes the stored file from the phone.
+const OCACHE = 'xdf-other';
+let otherData = null, otherBusy = null, otherState = OTHER ? 'checking' : 'none';
+async function otherBytes(net){
+  const inl = $('otherdata');
+  if (inl) return b64(inl.textContent.trim());           // claude.ai view: the data is inside the page
+  let c = null;
+  try {
+    c = await caches.open(OCACHE);
+    const hit = await c.match(OTHER.file);
+    if (hit){ const u8 = new Uint8Array(await hit.arrayBuffer()); if (u8.length === OTHER.bytes) return u8; }
+  } catch(_) {}
+  if (!net) return null;
+  const resp = await fetch(OTHER.file);
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  const u8 = new Uint8Array(await resp.arrayBuffer());
+  if (u8.length !== OTHER.bytes) throw new Error('incomplete download');
+  if (c){
+    try {
+      await c.put(OTHER.file, new Response(u8, {headers: {'Content-Type': 'application/octet-stream'}}));
+      for (const k of await c.keys()) if (!k.url.endsWith('/' + OTHER.file)) await c.delete(k);
+    } catch(_) {}
+  }
+  return u8;
+}
+function loadOther(){
+  if (otherData) return Promise.resolve(true);
+  if (!otherBusy) otherBusy = (async () => {
+    try {
+      const u8 = await otherBytes(true);
+      if (!u8) return false;
+      const o = await openBlob(u8);                       // {eq: machines, mat: [[SAP no., description, maker no.]]}
+      const mainSap = new Set(SAPINFO.keys()), shared = new Map();
+      for (const m of o.mat) if (!mainSap.has(m[0])) SAPINFO.set(m[0], [m[1], m[2]]);
+      addMachines(o.eq, true, i => o.mat[i][0]);
+      for (const m of o.mat){
+        const names = Array.from(new Set((CHAIN.get(m[0]) || []).filter(x => x[0].other).map(x => x[0].name)));
+        if (mainSap.has(m[0])) shared.set(m[0], names);
+        else rows.push(index({t:'sap', other:true, k:m[2] ? 3 : 4, kind:SAPK[m[2] ? 3 : 4] || 'Maker no.', mk:m[2], sapno:m[0], name:m[1], eq:names}));
+      }
+      if (shared.size) for (const r of rows){             // parts the main engine shares with other machines
+        if (r.other || r.t === 'eq') continue;
+        const saps = r.sapno ? [r.sapno] : r.sap ? r.sap.map(s => s[0]) : r.cmds ? [].concat(...r.cmds.map(c => (CMDSAP[c] || []).map(s => s[0]))) : [];
+        const extra = Array.from(new Set([].concat(...saps.map(s => shared.get(s) || []))));
+        if (extra.length){ r.eqO = extra; r.hayO = ' | ' + norm(extra.join(' ')); r.hayOB = squashB(r.hayO); r.hayOS = r.hayOB.toLowerCase(); }
+      }
+      otherData = o;
+      otherState = $('otherdata') ? 'inline' : 'stored';
+      return true;
+    } catch(_) {
+      try { await caches.delete(OCACHE); } catch(__) {}
+      return false;
+    } finally { otherBusy = null; }
+  })();
+  return otherBusy;
+}
+async function otherPrefetch(){   // store the file for offline use without opening it
+  if (!OTHER || otherData) return;
+  try { if (await otherBytes(false)){ otherState = $('otherdata') ? 'inline' : 'stored'; return bottom(); } } catch(_) {}
+  if (navigator.onLine === false){ otherState = 'missing'; return bottom(); }
+  otherState = 'downloading'; bottom();
+  try { await otherBytes(true); otherState = 'stored'; } catch(_) { otherState = 'missing'; }
+  bottom();
+}
+window.addEventListener('online', () => { if (otherState === 'missing') otherPrefetch(); });
+
+// ---------- bottom lines: other machinery status and the page's last update ----------
+const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function fmtTime(iso){
+  const d = new Date(iso);
+  if (isNaN(d)) return iso;
+  return d.getDate() + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear() + ', ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+}
+window.xdfMain = MAIN_N.toLocaleString() + ' entries';
+window.xdfExtra = () => {
+  let h = '';
+  if (OTHER){
+    const n = OTHER.eq.toLocaleString() + ' machines, ' + OTHER.lines.toLocaleString() + ' parts-list lines';
+    const t = otherState === 'stored' ? '✓ Other machinery (' + n + ') is stored on this device.'
+      : otherState === 'inline' ? 'Other machinery (' + n + ') is included in this page.'
+      : otherState === 'downloading' ? 'Other machinery: downloading for offline use…'
+      : otherState === 'missing' ? 'Other machinery is not on this device yet. Connect to the internet once.' : '';
+    if (t) h += '<span class="xl' + (otherState === 'stored' ? ' ok' : '') + '">' + t + '</span>';
+  }
+  if (D.meta.builtAt) h += '<span class="xl">Page last updated: ' + esc(fmtTime(D.meta.builtAt)) + '</span>';
+  return h;
+};
+function bottom(){ if (window.xdfOfflineRefresh) window.xdfOfflineRefresh(); }
+
+// ---------- start ----------
+$('opts').hidden = !(OTHER || HAS_MACH);
+$('optOther').hidden = !OTHER;
+$('optMach').hidden = !HAS_MACH;
+syncOpts();
 render();
+bottom();
+if (!OTHER){ save('xdf-opt-other', null); try { caches.delete(OCACHE).catch(() => {}); } catch(_) {} }
+else if (OPT.other) setOther(true);
+else otherPrefetch();
 })();
 (function offlineStatus(){
   const el = document.getElementById('offline');
-  const set = (cls, html) => { el.className = 'offl ' + cls; el.innerHTML = html; };
+  const set = (cls, html) => { el.className = 'offl ' + cls; el.innerHTML = html + (window.xdfExtra ? window.xdfExtra() : ''); };
   if (/claude\.ai|claudeusercontent/.test(location.hostname)){
-    set('', 'This view needs an internet connection. The app installed on the iPhone from GitHub Pages works offline.');
+    (window.xdfOfflineRefresh = () => set('', 'This view needs an internet connection. The app installed on the iPhone from GitHub Pages works offline.'))();
     return;
   }
   if (!('serviceWorker' in navigator) || !(location.protocol === 'https:' || location.hostname === 'localhost')){
-    set('warn', 'Offline use is not available in this browser.');
+    (window.xdfOfflineRefresh = () => set('warn', 'Offline use is not available in this browser.'))();
     return;
   }
   let updateReady = false, hadController = !!navigator.serviceWorker.controller;
-  const count = () => { const c = document.getElementById('count').textContent; return c ? 'All ' + c + ' are' : 'All data is'; };
+  const count = () => (window.xdfMain ? 'All ' + window.xdfMain + ' are' : 'All data is');
   async function cached(){
     try { return !!(await caches.match('./index.html', {ignoreSearch: true}) && await caches.match('./icon-192.png')); }
     catch(_) { return false; }

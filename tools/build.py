@@ -19,15 +19,28 @@ Usage:
 The parts data is gzip-compressed and encrypted (AES-256-GCM, key from the
 access code via PBKDF2-SHA256) so the published site is unreadable without the
 code. Never commit the raw files or the code.
+
+Output (docs/): index.html (main engine data inside), sw.js, icons, manifest and,
+when tools/config.json has "other_machinery": true, other-<hash>.dat (the other
+machinery data, encrypted with the same key and loaded only by the app's
+"Other machinery" switch). XDF_OUT=<dir> writes somewhere else; XDF_CONFIG='{...}'
+overrides config.json for one run.
 """
-import base64, datetime, gzip, hashlib, json, os, re, secrets, shutil, sys
+import base64, csv, datetime, gzip, hashlib, hmac, json, os, re, secrets, shutil, sys
 from pathlib import Path
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 ROOT = Path(__file__).resolve().parent.parent
 RAW = Path(sys.argv[1])
-OUT = ROOT / 'docs'
+OUT = Path(os.environ.get('XDF_OUT') or ROOT / 'docs')
 ITER = 310000
+
+# Optional parts of the app (tools/config.json). Set one to false and rebuild to remove it completely:
+#   other_machinery  the rest of the ship from the SAP BOM export, kept in its own file docs/other-*.dat
+#   machinery_view   machines, their parts lists and the equipment -> BOM -> item no. -> material no. lines
+CFG = {'other_machinery': True, 'machinery_view': True}
+CFG.update(json.loads((ROOT / 'tools' / 'config.json').read_text(encoding='utf-8')))
+CFG.update(json.loads(os.environ.get('XDF_CONFIG') or '{}'))
 
 def unesc(s):
     return re.sub(r'\\([\\`*_{}\[\]()#+\-.!|~<>=&])', r'\1', s)
@@ -248,7 +261,6 @@ ygroups = sorted(ygroups & {c[0][:4] for c in chapters})
 # sap/SAP_XREF_OE_full.tsv: OE part no. -> SAP material no. + SAP description
 # sap/SAP_XREF_other_maker_nos.tsv: CMD yard no., WinGD ID no., maker no. -> SAP material no. + description
 # Only the SAP number and SAP description are used (no equipment or stock).
-import csv
 SAPKINDS = ['OE no. not in the X72DF-2.1 catalogue', 'CMD yard no.', 'WinGD sensor / ID no.',
             'Maker / sub-supplier no.', 'No maker no. in SAP']
 oesap, cmdsap, saprecs = {}, {}, []
@@ -281,35 +293,41 @@ for row, sap, desc in sap_rows('SAP_XREF_other_maker_nos.tsv'):
         continue
     k = {'CMD yard no.': 1, 'WinGD ID no.': 2, 'maker no.': 3}.get(kind, 4)
     saprecs.append([k, mk if k != 4 else '', sap, desc])
-# ---------- Main engine equipment in the SAP BOM export that the cross-reference tables left out ----------
+# ---------- The SAP equipment BOM export ----------
 # sap/bom_81N3_full_export.tsv is the full export ("EXPORT 81N3 ALL SPARES WITH NUMBERS.xlsx" as text).
-# Scope: the engine's own functional location, plus every equipment SAP names as main engine or iCER
-# ("ME1 ...", "ME ...", "M/E ...", "MAIN ENGINE ...", "ICER ..."). From it come: the materials the
-# cross-reference tables do not list, the maker no. SAP keeps in its second column (MPN) when the first
-# is empty, and the SAP equipment name of every "other SAP" entry (shown as its system).
+# One line per BOM item: equipment (the machine) -> its BOM (parts list) -> item no. -> material no.
+# Main engine scope: the engine's own functional location, plus every equipment SAP names as main engine
+# or iCER ("ME1 ...", "ME ...", "M/E ...", "MAIN ENGINE ...", "ICER ..."). All other lines are "other machinery".
 ME_NAME = re.compile(r'(^|[^A-Z])(ME[12]?|M/E|ICER)([^A-Z]|$)|MAIN ENGINE')
 def me_scope(name, floc):
     return floc.startswith('A-LS-REEF-0600-010') or bool(ME_NAME.search(name.upper()))
-have = {s[0] for l in oesap.values() for s in l} | {s[0] for l in cmdsap.values() for s in l} | {r[2] for r in saprecs}
-bom_eq, bom_mk, bom_new, bom_scope = {}, {}, {}, set()
+bom = []    # (main engine scope?, equipment no., equipment name, BOM no., item no., SAP no., description, maker no.)
 with open(RAW / 'sap' / 'bom_81N3_full_export.tsv', encoding='utf-8', newline='') as fh:
     for row in csv.DictReader(fh, delimiter='\t'):
         name = ' '.join(row['Object Description'].split())
-        if not me_scope(name, row['Functional Location']):
+        sap, item = row['Component/Material No.'].strip(), row['Item Number'].strip()
+        if not re.fullmatch(r'\d{12}', sap) or not item.isdigit():
+            warn.append(f'odd BOM line skipped: material {sap!r} item {item!r} on {name}')
             continue
-        sap = row['Component/Material No.'].strip()
-        if not re.fullmatch(r'\d{12}', sap):
-            warn.append(f'odd SAP no. in BOM export: {sap!r} on {name}')
-            continue
-        bom_scope.add(sap)
-        eqs = bom_eq.setdefault(sap, [])
-        if name not in eqs:
-            eqs.append(name)
-        mk = row['Manufacturer Part (HERS)'].strip() or row['Manufacturer Part No. (MPN)'].strip()
-        if mk:
-            bom_mk.setdefault(sap, mk)
-        if sap not in have:
-            bom_new.setdefault(sap, row['Material Description'].strip())
+        bom.append((me_scope(name, row['Functional Location']), row['Equipment'].strip(), name, row['BOM Number'].strip(),
+                    int(item), sap, row['Material Description'].strip(),
+                    row['Manufacturer Part (HERS)'].strip() or row['Manufacturer Part No. (MPN)'].strip()))
+
+# Main engine: the materials the cross-reference tables do not list, the maker no. SAP keeps in its second
+# column (MPN) when the first is empty, and the SAP equipment name of every "other SAP" entry (its system).
+have = {s[0] for l in oesap.values() for s in l} | {s[0] for l in cmdsap.values() for s in l} | {r[2] for r in saprecs}
+bom_eq, bom_mk, bom_new, bom_scope = {}, {}, {}, set()
+for me, eqno, name, bomno, item, sap, desc, mk in bom:
+    if not me:
+        continue
+    bom_scope.add(sap)
+    eqs = bom_eq.setdefault(sap, [])
+    if name not in eqs:
+        eqs.append(name)
+    if mk:
+        bom_mk.setdefault(sap, mk)
+    if sap not in have:
+        bom_new.setdefault(sap, desc)
 mpn_filled = 0
 for r in saprecs:
     if r[0] == 4 and bom_mk.get(r[2]):           # SAP has the maker no. in the MPN column
@@ -320,9 +338,45 @@ for sap, desc in bom_new.items():
     mk = bom_mk.get(sap, '')
     saprecs.append([3 if mk else 4, mk, sap, desc, bom_eq[sap]])
 have |= set(bom_new)
-print(f'BOM export: {len(bom_scope)} main engine SAP nos. in scope on {len({e for v in bom_eq.values() for e in v})} equipment; '
+print(f'BOM export: {len(bom)} lines; main engine: {len(bom_scope)} SAP nos. on {len({l[1] for l in bom if l[0]})} equipment; '
       f'{len(bom_new)} added; {mpn_filled} maker nos. filled from the MPN column; '
       f'{len(bom_scope - have)} still missing from the app')
+
+def machines(lines, ref):
+    """[[equipment no., name, BOM no., [item no., ref, item no., ref, ...]]]: equipment in file order, items by item no."""
+    order, by = [], {}
+    for me, eqno, name, bomno, item, sap, desc, mk in lines:
+        if eqno not in by:
+            by[eqno] = [eqno, name, bomno, []]
+            order.append(eqno)
+        elif by[eqno][1] != name or by[eqno][2] != bomno:
+            warn.append(f'equipment {eqno} has two names or BOM numbers')
+        by[eqno][3].append((item, ref(sap)))
+    for e in by.values():
+        if len({i for i, _ in e[3]}) != len(e[3]):
+            warn.append(f'equipment {e[0]} repeats an item no.')
+        e[3] = [x for pair in sorted(e[3]) for x in pair]
+    return [by[k] for k in order]
+
+# Machinery view (optional): main engine machines with their parts lists.
+mach = machines([l for l in bom if l[0]], lambda s: s) if CFG['machinery_view'] else None
+
+# Other machinery (optional): every line outside the main engine scope, as its own data set.
+other = None
+if CFG['other_machinery']:
+    ol = [l for l in bom if not l[0]]
+    mats = {}
+    for me, eqno, name, bomno, item, sap, desc, mk in ol:
+        m = mats.setdefault(sap, [sap, desc, mk])
+        if m[1] != desc:
+            warn.append(f'material {sap} has two descriptions')
+        if not m[2] and mk:
+            m[2] = mk
+    matlist = [mats[k] for k in sorted(mats)]
+    mi = {m[0]: i for i, m in enumerate(matlist)}
+    other = {'eq': machines(ol, lambda s: mi[s]), 'mat': matlist}
+    print(f'other machinery: {len(ol)} lines on {len(other["eq"])} equipment, {len(matlist)} materials '
+          f'({len(set(mats) & bom_scope)} also on main engine equipment)')
 print(f'SAP: {len(oesap)} catalogue part nos. have a SAP no. ({sum(1 for r in spc if r[2] in oesap)} of {len(spc)} rows), '
       f'{sum(1 for v in oesap.values() if len(v) > 1)} with several SAP materials; '
       f'{len(cmdsap)} CMD yard nos. linked; {len(saprecs)} other SAP entries '
@@ -340,30 +394,54 @@ for s in specials:
 lists[0]['note'] = ('The PDF text does not pair these numbers with the names. The SAP section below '
                     'shows what each number is. Confirm on this PDF page.')
 
-meta = {
-    'source': 'WinGD X72DF-2.1 Spare Parts Catalogue (Issue 001, 2022-08); CMD/Jiangnan lists 50043150 (tools), 50043149 (engine spares), 50043141 (accessories). Copied from the "00 Claude indexes" Drive folder.',
-    'built': datetime.date.today().isoformat(),
-    'counts': {'spc': len(spc), 'tools': len(tools), 'pages': len(pages)},
-}
-data = {'meta': meta, 'systems': [[s[0], s[1]] for s in SYSTEMS], 'chapters': chapters, 'spc': spc,
-        'tools': tools, 'lists': lists, 'pages': pages, 'ygroups': ygroups,
-        'oesap': oesap, 'cmdsap': cmdsap, 'saprecs': saprecs, 'sapkinds': SAPKINDS, 'specials': specials}
-plain = json.dumps(data, ensure_ascii=False, separators=(',', ':')).encode()
-
-# ---------- encrypt ----------
+# ---------- key ----------
 code = re.sub(r'[^a-z0-9]', '', os.environ.get('XDF_CODE', '').lower())
 if len(code) < 12:
     sys.exit('Set XDF_CODE to the access code (at least 12 letters/digits).')
 salt = base64.b64decode((ROOT / 'tools' / 'salt.txt').read_text().strip())
 key = hashlib.pbkdf2_hmac('sha256', code.encode(), salt, ITER, 32)
+
+# The other machinery file: 12-byte IV + AES-GCM(gzip(JSON)). The IV comes from the content, so the file
+# (and its name) only changes when the data changes and phones do not download it again after other updates.
+other_blob = other_name = None
+if other:
+    gz = gzip.compress(json.dumps(other, ensure_ascii=False, separators=(',', ':')).encode(), 9, mtime=0)
+    oiv = hmac.new(key, gz, hashlib.sha256).digest()[:12]
+    other_blob = oiv + AESGCM(key).encrypt(oiv, gz, None)
+    other_name = f'other-{hashlib.sha256(other_blob).hexdigest()[:12]}.dat'
+
+meta = {
+    'source': 'WinGD X72DF-2.1 Spare Parts Catalogue (Issue 001, 2022-08); CMD/Jiangnan lists 50043150 (tools), 50043149 (engine spares), 50043141 (accessories). Copied from the "00 Claude indexes" Drive folder.',
+    'built': datetime.date.today().isoformat(),
+    'builtAt': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
+    'counts': {'spc': len(spc), 'tools': len(tools), 'pages': len(pages)},
+}
+if other:
+    meta['other'] = {'file': other_name, 'bytes': len(other_blob), 'eq': len(other['eq']),
+                     'lines': sum(len(e[3]) // 2 for e in other['eq']), 'mats': len(other['mat'])}
+data = {'meta': meta, 'systems': [[s[0], s[1]] for s in SYSTEMS], 'chapters': chapters, 'spc': spc,
+        'tools': tools, 'lists': lists, 'pages': pages, 'ygroups': ygroups,
+        'oesap': oesap, 'cmdsap': cmdsap, 'saprecs': saprecs, 'sapkinds': SAPKINDS, 'specials': specials}
+if mach:
+    data['mach'] = mach
+plain = json.dumps(data, ensure_ascii=False, separators=(',', ':')).encode()
+
+# ---------- encrypt ----------
 iv = secrets.token_bytes(12)
 ct = AESGCM(key).encrypt(iv, gzip.compress(plain, 9, mtime=0), None)
 enc = {'v': 1, 'iter': ITER, 'salt': base64.b64encode(salt).decode(),
        'iv': base64.b64encode(iv).decode(), 'ct': base64.b64encode(ct).decode()}
 
 OUT.mkdir(exist_ok=True)
-html = (ROOT / 'tools' / 'template.html').read_text(encoding='utf-8').replace('/*DATA*/', json.dumps(enc))
+tpl = (ROOT / 'tools' / 'template.html').read_text(encoding='utf-8').replace('/*DATA*/', json.dumps(enc))
+assert tpl.count('<!--OTHER-->') == 1
+html = tpl.replace('<!--OTHER-->', '')
 (OUT / 'index.html').write_text(html, encoding='utf-8')
+for old in OUT.glob('other-*.dat'):               # one current file at most; none when the option is off
+    if old.name != other_name:
+        old.unlink()
+if other_blob:
+    (OUT / other_name).write_bytes(other_blob)
 for f in ('manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png'):
     shutil.copy(ROOT / 'app' / f, OUT / f)
 ver = hashlib.sha1(html.encode()).hexdigest()[:10]
@@ -372,9 +450,11 @@ ver = hashlib.sha1(html.encode()).hexdigest()[:10]
 
 if os.environ.get('XDF_ARTIFACT'):
     # Same page for a private claude.ai artifact: the host adds the document skeleton and
-    # safe-area padding, and has no service worker, manifest or home-screen icon.
+    # safe-area padding, and has no service worker, manifest or home-screen icon. The other
+    # machinery data cannot be cached there, so it rides inside the page.
+    inline = ('<script id="otherdata" type="text/plain">' + base64.b64encode(other_blob).decode() + '</script>') if other_blob else ''
     keep = []
-    for l in html.splitlines():
+    for l in tpl.replace('<!--OTHER-->', inline).splitlines():
         s = l.strip()
         if s.lower() in ('<!doctype html>', '<html lang="en">', '<head>', '</head>', '<body>', '</body>', '</html>'):
             continue
@@ -393,8 +473,12 @@ if os.environ.get('XDF_ARTIFACT'):
 
 if os.environ.get('XDF_DUMP'):
     Path(os.environ['XDF_DUMP']).write_bytes(plain)
+    if other:
+        Path(os.environ['XDF_DUMP'] + '.other').write_text(json.dumps(other, ensure_ascii=False), encoding='utf-8')
 print(f'chapters={len(chapters)} spc={len(spc)} tools={len(tools)} pages={len(pages)} '
-      f'plain={len(plain)//1024}KB html={len(html)//1024}KB ver={ver}')
+      f'plain={len(plain)//1024}KB html={len(html)//1024}KB ver={ver} built={meta["builtAt"]}')
+print('options:', CFG, '| other file:', f'{other_name} {len(other_blob)//1024}KB' if other_blob else 'none',
+      '| machines in page:', len(mach) if mach else 'none')
 for w in warn[:40]:
     print('WARN', w)
 print('warnings:', len(warn))
