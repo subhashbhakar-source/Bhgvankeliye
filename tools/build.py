@@ -15,6 +15,9 @@ Usage:
                                   main engine equipment under other names, MPN column, equipment names)
   pages/p*.txt                    page maps made from "Split - 100 pages/text" SPC files:
                                   "=== <PDF page> | <printed page>" then the OE numbers on that page
+  signals/*.md                    (optional) sensor / signal lists, the clean rows of the Drive index
+                                  "SIGNALS_wice_denis ...": "## <module>" then
+                                  "signal no | designation | WinGD part no | range / remark | IO type"
 
 The parts data is gzip-compressed and encrypted (AES-256-GCM, key from the
 access code via PBKDF2-SHA256) so the published site is unreadable without the
@@ -302,6 +305,7 @@ ME_NAME = re.compile(r'(^|[^A-Z])(ME[12]?|M/E|ICER)([^A-Z]|$)|MAIN ENGINE')
 def me_scope(name, floc):
     return floc.startswith('A-LS-REEF-0600-010') or bool(ME_NAME.search(name.upper()))
 clean = lambda s: re.sub(r'[^A-Z0-9]', '', s.upper())
+bom_uom = {}   # SAP no. -> unit of measure, where it is not EA (each)
 bom = []    # (main engine scope?, equipment no., equipment name, BOM no., item no., SAP no., description, maker no., second maker no.,
             #  technical ID = the machinery code REEF-nnn-nnn-nn, functional location A-LS-REEF-nnnn-nnn)
 with open(RAW / 'sap' / 'bom_81N3_full_export.tsv', encoding='utf-8', newline='') as fh:
@@ -314,6 +318,8 @@ with open(RAW / 'sap' / 'bom_81N3_full_export.tsv', encoding='utf-8', newline=''
         # SAP has two maker part no. columns. The first (HERS) is the one normally filled; the second (MPN)
         # is used when the first is empty, and kept as a "second maker no." when it says something different.
         hers, mpn = row['Manufacturer Part (HERS)'].strip(), row['Manufacturer Part No. (MPN)'].strip()
+        if row['Component UoM'].strip() not in ('', 'EA'):
+            bom_uom[sap] = row['Component UoM'].strip()
         bom.append((me_scope(name, row['Functional Location']), row['Equipment'].strip(), name, row['BOM Number'].strip(),
                     int(item), sap, row['Material Description'].strip(), hers or mpn,
                     mpn if hers and mpn and clean(hers) != clean(mpn) else '',
@@ -423,6 +429,36 @@ for s in specials:
         note_mk(x[0], s['oe'])
 print(f'maker part nos. as SAP writes them: {sum(1 for v in sapmk.values() if v[0])} differ from the listed number, '
       f'{sum(1 for v in sapmk.values() if v[1])} have a second maker no.')
+
+# ---------- Sensor / signal tags (optional: raw/signals/*.md) ----------
+# sig: [signal tag, designation, WinGD part no., range / remark, IO type, sectionIdx, [[SAP no., SAP description], ...]]
+# The SAP no. is found by the WinGD part no. among the SAP entries (maker no. exactly equal).
+sig, sigsec, sigsrc = [], [], ''
+mk_sap = {}
+for r in saprecs:
+    if r[1]:
+        mk_sap.setdefault(clean(r[1]), []).append([r[2], r[3]])
+for p in sorted((RAW / 'signals').glob('*.md')) if (RAW / 'signals').is_dir() else []:
+    sec = None
+    for l in p.read_text(encoding='utf-8').splitlines():
+        l = l.strip()
+        if l.startswith('# ') and not sigsrc:
+            sigsrc = l[2:].strip()
+        elif l.startswith('## '):
+            sigsec.append(l[3:].strip())
+            sec = len(sigsec) - 1
+        elif sec is not None and l.count('|') == 4:
+            tag, des, part, rng, io = [x.strip() for x in l.split('|')]
+            if not re.fullmatch(r'[A-Z]{2}\d{4}(-\d{2})?[A-Z]?', tag):
+                warn.append(f'odd signal tag skipped: {tag}')
+                continue
+            sig.append([tag, des, part, rng, io, sec, mk_sap.get(clean(part), []) if part else []])
+if sig:
+    parts = {r[2] for r in sig if r[2]}
+    print(f'signals: {len(sig)} rows in {len(sigsec)} modules; {len(parts)} WinGD part nos., '
+          f'{sum(1 for x in parts if clean(x) in mk_sap)} of them with a SAP no. '
+          f'({sum(1 for r in sig if r[6])} rows)')
+
 lists[0]['note'] = ('The PDF text does not pair these numbers with the names. The SAP section below '
                     'shows what each number is. Confirm on this PDF page.')
 
@@ -455,6 +491,11 @@ data = {'meta': meta, 'systems': [[s[0], s[1]] for s in SYSTEMS], 'chapters': ch
         'tools': tools, 'lists': lists, 'pages': pages, 'ygroups': ygroups,
         'oesap': oesap, 'cmdsap': cmdsap, 'saprecs': saprecs, 'sapkinds': SAPKINDS, 'specials': specials,
         'sapmk': sapmk}
+# Units of measure for the order list: only the materials SAP does not count in EA (each).
+in_app = bom_scope | have | ({m[0] for m in other['mat']} if other else set())
+data['uom'] = {k: v for k, v in sorted(bom_uom.items()) if k in in_app}
+if sig:
+    data['sig'], data['sigsec'], data['sigsrc'] = sig, sigsec, sigsrc
 if mach:
     data['mach'] = mach
 plain = json.dumps(data, ensure_ascii=False, separators=(',', ':')).encode()
@@ -478,7 +519,9 @@ if other_blob:
 for f in ('manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png'):
     shutil.copy(ROOT / 'app' / f, OUT / f)
 ver = hashlib.sha1(html.encode()).hexdigest()[:10]
-(OUT / 'sw.js').write_text((ROOT / 'tools' / 'sw.template.js').read_text().replace('__VERSION__', ver))
+sw = (ROOT / 'tools' / 'sw.template.js').read_text()
+assert sw.count('__VERSION__') == 1 and sw.count('__OTHER__') == 1
+(OUT / 'sw.js').write_text(sw.replace('__VERSION__', ver).replace('__OTHER__', other_name or ''))
 (OUT / '.nojekyll').write_text('')
 
 if os.environ.get('XDF_ARTIFACT'):

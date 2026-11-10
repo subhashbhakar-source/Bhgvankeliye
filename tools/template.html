@@ -42,30 +42,34 @@ html,body{margin:0;background:var(--bg);color:var(--ink);
 [hidden]{display:none !important}
 #app,#lock{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
 header{position:sticky;top:0;z-index:5;background:var(--bg);
-  padding-block:calc(env(safe-area-inset-top, 0px) + 10px) 8px;border-bottom:1px solid var(--line)}
-h1{font-size:17px;margin:0 0 8px;font-weight:650;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-h1 small{font-weight:400;color:var(--muted);font-size:12px}
+  padding-block:calc(env(safe-area-inset-top, 0px) + 6px) 6px;border-bottom:1px solid var(--line)}
+h1{font-size:17px;margin:0 0 2px;font-weight:650;display:flex;align-items:center;gap:8px;min-height:32px}
+h1 small{font-weight:400;color:var(--muted);font-size:12px;flex:1}
+.jump{flex:none;border:0;background:none;color:var(--accent);font-size:14px;min-height:44px;margin:-6px 0;padding:0 2px 0 12px;cursor:pointer}
 .search{position:relative}
 input{font:inherit}
 .search input{width:100%;font-size:17px;padding:12px 40px 12px 14px;border-radius:12px;
   border:1px solid var(--line);background:var(--card);color:var(--ink);outline:none;-webkit-appearance:none;appearance:none}
 .search input:focus{border-color:var(--accent)}
 .search input::-webkit-search-cancel-button,.search input::-webkit-search-decoration{-webkit-appearance:none;appearance:none;display:none}
-.clear{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;
-  color:var(--muted);font-size:22px;width:34px;height:34px}
-.filters{display:flex;gap:6px;margin-top:8px;overflow-x:auto;scrollbar-width:none}
+.clear{position:absolute;right:2px;top:50%;transform:translateY(-50%);border:0;background:none;
+  color:var(--muted);font-size:24px;width:44px;height:44px}
+.filters{display:flex;gap:6px;margin-top:6px;overflow-x:auto;scrollbar-width:none}
 .filters::-webkit-scrollbar{display:none}
 .filters button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);
-  border-radius:999px;padding:6px 12px;font-size:14px}
+  border-radius:999px;padding:0 13px;min-height:44px;font-size:14px}
 .filters button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-#status{font-size:12px;color:var(--muted);margin-top:6px;min-height:16px}
+#status{font-size:12px;color:var(--muted);margin-top:5px;min-height:16px}
 main{padding-block:10px calc(env(safe-area-inset-bottom, 0px) + 24px);max-width:760px;margin:0 auto}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 12px 10px;margin-bottom:10px}
+.card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 12px 10px;margin-bottom:10px}
+.stb{position:absolute;top:0;right:0;width:46px;height:46px;border:0;background:none;color:var(--muted);font-size:22px;line-height:1;cursor:pointer}
+.stb[aria-pressed="true"]{color:var(--warn)}
+.card.hs > .src,.card.hs > .name{margin-right:34px}
 .src{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
 .name{font-weight:650;font-size:16px;word-break:break-word}
 .rem{color:var(--muted);font-size:13px;margin-top:2px;word-break:break-word}
 .ids{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.id{font:600 14px/1.2 ui-monospace,"SF Mono",Menlo,monospace;padding:6px 9px;border-radius:8px;
+.id{font:600 14px/1.2 ui-monospace,"SF Mono",Menlo,monospace;padding:6px 9px;border-radius:8px;min-height:44px;
   background:var(--chip);border:0;color:var(--ink);text-align:left;cursor:pointer}
 .id.sap{background:var(--sap-bg);color:var(--sap)}
 .id .lbl{display:block;font:500 10px/1.2 -apple-system,BlinkMacSystemFont,sans-serif;opacity:.8;letter-spacing:.02em;text-transform:uppercase;margin-bottom:2px}
@@ -103,25 +107,25 @@ main{padding-block:10px calc(env(safe-area-inset-bottom, 0px) + 24px);max-width:
 .tag{display:inline-block;font-size:11px;font-weight:650;color:var(--accent-ink);background:var(--accent);border-radius:6px;padding:2px 7px;margin-bottom:6px}
 .ln{font-size:13px;margin-top:4px;word-break:break-word}
 .note{font-size:12px;margin-top:8px;padding:6px 8px;border-radius:8px;background:var(--warn-bg);color:var(--warn)}
-.link{border:0;background:none;color:var(--accent);font-size:13px;padding:6px 0 0;cursor:pointer;text-align:left}
+.link{border:0;background:none;color:var(--accent);font-size:14px;min-height:44px;padding:4px 0;cursor:pointer;text-align:left}
 details{margin-top:6px;font-size:13px}
-details summary{color:var(--accent);cursor:pointer}
+details summary{color:var(--accent);cursor:pointer;padding:13px 0}
 details .ln{color:var(--muted)}
 mark{background:var(--hl);color:inherit;border-radius:3px}
 .empty{color:var(--muted);text-align:center;padding:36px 10px}
 .empty p{margin:6px 0}
 .tip{font-size:13px}
 .ex{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0}
-.ex button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 12px;font-size:14px}
+.ex button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:0 14px;min-height:44px;font-size:14px}
 button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .more{display:block;width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);
   background:var(--card);color:var(--accent);font-size:15px}
-#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 20px);transform:translateX(-50%);
-  background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:999px;font-size:14px;opacity:0;
-  transition:opacity .2s;pointer-events:none;z-index:9}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom, 0px) + 78px);transform:translateX(-50%);
+  background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:14px;font-size:14px;opacity:0;max-width:calc(100% - 32px);text-align:center;
+  transition:opacity .2s;pointer-events:none;z-index:30}
 #toast.on{opacity:1}
 footer{color:var(--muted);font-size:11px;text-align:center;padding-block:8px 6px;max-width:760px;margin:0 auto}
-.offl{text-align:center;font-size:13px;line-height:1.4;color:var(--muted);max-width:760px;margin:0 auto;padding-block:6px calc(env(safe-area-inset-bottom, 0px) + 28px)}
+.offl{text-align:center;font-size:13px;line-height:1.4;color:var(--muted);max-width:760px;margin:0 auto;padding-block:6px 4px}
 .offl.ok{color:var(--sap);font-weight:600}
 .offl.warn{color:var(--warn)}
 .offl .upd{display:block;color:var(--accent);font-weight:600;margin-top:4px}
@@ -134,13 +138,14 @@ footer{color:var(--muted);font-size:11px;text-align:center;padding-block:8px 6px
 .lockbox button{width:100%;margin-top:10px;font-size:17px;padding:12px;border-radius:12px;border:0;
   background:var(--accent);color:var(--accent-ink);font-weight:600}
 .lockbox .err{color:var(--err);min-height:20px}
-.filters.wrap{flex-wrap:wrap;overflow:visible}
-.opts{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:8px}
-.sw{display:inline-flex;align-items:center;gap:8px;border:0;background:none;color:var(--ink);font-size:14px;padding:3px 0;cursor:pointer}
-.sw .track{flex:none;width:38px;height:22px;border-radius:999px;background:var(--track);position:relative;transition:background .15s}
-.sw .track::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--knob);transition:transform .15s}
+.optsec{max-width:760px;margin:4px auto 8px;padding:10px 12px 6px;border:1px solid var(--line);border-radius:12px;background:var(--card);scroll-margin-top:190px}
+.sw{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;color:var(--ink);font-size:15px;min-height:52px;padding:4px 0;cursor:pointer;text-align:left}
+.sw small{display:block;color:var(--muted);font-size:12.5px;line-height:1.35}
+.sw .track{flex:none;width:46px;height:28px;border-radius:999px;background:var(--track);position:relative;transition:background .15s}
+.sw .track::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--knob);transition:transform .15s}
 .sw[aria-checked="true"] .track{background:var(--accent)}
-.sw[aria-checked="true"] .track::after{transform:translateX(16px)}
+.sw[aria-checked="true"] .track::after{transform:translateX(18px)}
+.optmsg{font-size:12.5px;color:var(--warn);margin:0 0 6px 58px}
 @media (prefers-reduced-motion: reduce){.sw .track,.sw .track::after{transition:none}}
 .tag.mtag{background:var(--chip);color:var(--ink)}
 .chain{display:flex;flex-direction:column;gap:6px;margin:6px 0 2px}
@@ -148,11 +153,11 @@ footer{color:var(--muted);font-size:11px;text-align:center;padding-block:8px 6px
 .chl{color:var(--muted);margin-top:2px}
 .chl i{font-style:normal;white-space:nowrap}
 .chl b{font:600 12.5px/1.2 ui-monospace,"SF Mono",Menlo,monospace;color:var(--ink)}
-.bom summary{font-size:14px;padding:4px 0}
+.bom summary{font-size:14px}
 .brow{display:grid;grid-template-columns:3em minmax(0,1fr);gap:2px 8px;align-items:start;padding:7px 0;border-top:1px solid var(--line);font-size:13px}
 .brow.bhead{color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;border-top:0;padding:6px 0 4px}
 .bit{font:600 13px/1.9 ui-monospace,"SF Mono",Menlo,monospace;color:var(--muted)}
-.id.bsap{font-size:13px;padding:4px 7px}
+.id.bsap{font-size:13px;padding:4px 8px}
 .bds{min-width:0;word-break:break-word;padding-top:4px}
 .bomrows .more{margin-top:8px;padding:9px;font-size:14px}
 .legend{max-width:760px;margin:4px auto 6px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);font-size:13px;line-height:1.5}
@@ -161,7 +166,7 @@ footer{color:var(--muted);font-size:11px;text-align:center;padding-block:8px 6px
 .offl .xl{display:block;color:var(--muted);font-weight:400;margin-top:3px}
 .offl .xl.ok{color:var(--sap);font-weight:600}
 .eqlist{max-width:760px;margin:4px auto 8px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);font-size:14px}
-.eqlist summary{font-size:15px;font-weight:650;color:var(--ink);cursor:pointer}
+.eqlist summary{font-size:15px;font-weight:650;color:var(--ink);cursor:pointer;padding:6px 0}
 .eqlist input{width:100%;margin-top:10px;font-size:16px;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);outline:none;-webkit-appearance:none;appearance:none}
 .eqlist input:focus{border-color:var(--accent)}
 .eqhelp{color:var(--muted);font-size:12.5px;line-height:1.45;margin-top:8px}
@@ -173,6 +178,41 @@ footer{color:var(--muted);font-size:11px;text-align:center;padding-block:8px 6px
 .eqr .id{font-size:13px;padding:5px 8px}
 .eqm{color:var(--muted);font-size:12px;margin-top:5px;word-break:break-word}
 .eqm b{color:var(--ink);font-weight:600}
+.endl{text-align:center;max-width:760px;margin:0 auto;padding-bottom:calc(env(safe-area-inset-bottom, 0px) + 84px)}
+.endl .link{font-size:13px;text-align:center}
+.endl .link.sure{color:var(--err);font-weight:600}
+.back{display:block;margin:-4px 0 6px}
+.subh{font-size:12px;font-weight:650;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 8px}
+.rech{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:6px}
+/* order list: the "+ List" button beside every SAP material no., the pill and the list itself */
+.addl{flex:none;align-self:stretch;min-height:44px;min-width:56px;padding:0 8px;border-radius:8px;border:1px solid var(--accent);background:none;color:var(--accent);font-size:13px;font-weight:600;cursor:pointer}
+.addl.in{border-color:var(--sap);color:var(--sap)}
+.brow .addl{min-width:50px;padding:0 5px}
+.sapsec .pair .id,.mystar .pair .id{padding-left:7px;padding-right:7px}
+#listpill{position:fixed;right:max(14px, env(safe-area-inset-right, 0px));bottom:calc(env(safe-area-inset-bottom, 0px) + 16px);z-index:8;min-height:48px;padding:0 18px;border-radius:999px;border:0;
+  background:var(--accent);color:var(--accent-ink);font-size:15px;font-weight:650;box-shadow:0 2px 10px rgba(0,0,0,.3);cursor:pointer}
+#listp{position:fixed;inset:0;z-index:15;background:var(--bg);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  padding:calc(env(safe-area-inset-top, 0px) + 8px) max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 28px) max(16px, env(safe-area-inset-left, 0px))}
+.lpin{max-width:760px;margin:0 auto}
+.lph{display:flex;align-items:center;gap:10px;position:sticky;top:calc(env(safe-area-inset-top, 0px) * -1 - 8px);background:var(--bg);padding:calc(env(safe-area-inset-top, 0px) + 8px) 0 6px;z-index:1}
+.lph b{font-size:18px;flex:1}
+.btn{min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:15px;cursor:pointer}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.btn.sure{border-color:var(--err);color:var(--err);font-weight:600}
+.lpb{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.lrow{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:8px}
+.lrow .sapn{margin-top:6px}
+.lq{display:flex;align-items:center;gap:8px;margin-top:8px}
+.lq .qb{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:20px;cursor:pointer}
+.lq input{width:64px;height:44px;text-align:center;font-size:17px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);-webkit-appearance:none;appearance:none}
+.lq .qu{color:var(--muted);font-size:13px;flex:1}
+.lhelp{color:var(--muted);font-size:12.5px;line-height:1.45}
+/* my starred parts on the start screen */
+.mystar .name{font-size:15px}
+.snote{display:block;width:100%;border:0;background:none;color:var(--muted);font-size:13px;text-align:left;min-height:44px;padding:6px 0 0;cursor:pointer;word-break:break-word}
+.snote.has{color:var(--ink)}
+.snin{width:100%;margin-top:8px;font-size:16px;padding:10px 12px;border-radius:10px;border:1px solid var(--accent);background:var(--bg);color:var(--ink);outline:none;-webkit-appearance:none;appearance:none}
+.srow{display:flex;gap:18px}
 </style>
 </head>
 <body>
@@ -190,26 +230,28 @@ footer{color:var(--muted);font-size:11px;text-align:center;padding-block:8px 6px
 </div>
 <div id="app" hidden>
   <header>
-    <h1>XDF Parts Finder <small id="count"></small></h1>
+    <h1>XDF Parts Finder <small id="count"></small><button class="jump" id="jump" type="button" hidden>Options ↓</button></h1>
     <div class="search">
       <input id="q" type="search" inputmode="search" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-        placeholder="Name, OE, SAP or CMD no." aria-label="Search parts">
+        placeholder="Name, OE, SAP, CMD no. or sensor tag" aria-label="Search parts">
       <button class="clear" id="clr" aria-label="Clear search" hidden>×</button>
     </div>
     <div class="filters" role="group" aria-label="Source">
       <button data-f="all" aria-pressed="true">All</button>
-      <button data-f="spc" aria-pressed="false">WinGD (OE)</button>
-      <button data-f="yard" aria-pressed="false">Yard (CMD)</button>
-      <button data-f="sap" aria-pressed="false">Other SAP</button>
+      <button data-f="spc" aria-pressed="false">WinGD</button>
+      <button data-f="yard" aria-pressed="false">Yard</button>
+      <button data-f="sap" aria-pressed="false">SAP only</button>
       <button data-f="eq" aria-pressed="false" id="chipEq" hidden>Machines</button>
-    </div>
-    <div class="opts" id="opts" hidden>
-      <button class="sw" id="optOther" type="button" role="switch" aria-checked="false" hidden><span class="track"></span>Other machinery</button>
-      <button class="sw" id="optMach" type="button" role="switch" aria-checked="false" hidden><span class="track"></span>Machinery view</button>
     </div>
     <div id="status" aria-live="polite"></div>
   </header>
   <main id="out"></main>
+  <section class="optsec" id="opts" hidden>
+    <div class="lgh">Options</div>
+    <button class="sw" id="optOther" type="button" role="switch" aria-checked="false" hidden><span class="track"></span><span>Other machinery<small id="optOtherSub">The rest of the ship, searched only while this is on</small></span></button>
+    <div class="optmsg" id="optOtherMsg" hidden></div>
+    <button class="sw" id="optMach" type="button" role="switch" aria-checked="false" hidden><span class="track"></span><span>Machinery view<small>Machines, their parts lists, and where each part sits in SAP</small></span></button>
+  </section>
   <details id="eqlist" class="eqlist" hidden>
     <summary id="eqsum">SAP equipment and their codes</summary>
     <div class="eqhelp"><b>Technical ID</b> is the machine's code on board. <b>Equipment no.</b> is SAP's own number for the same machine. <b>BOM no.</b> is its parts list. Tap a code to copy it.</div>
@@ -225,6 +267,21 @@ footer{color:var(--muted);font-size:11px;text-align:center;padding-block:8px 6px
   </div>
   <footer id="foot"></footer>
   <div id="offline" class="offl" role="status" aria-live="polite"></div>
+  <div class="endl"><button class="link" id="forget" type="button">Forget access code on this device</button></div>
+  <button id="listpill" type="button" hidden></button>
+</div>
+<div id="listp" hidden role="dialog" aria-modal="true" aria-label="Order list">
+  <div class="lpin">
+    <div class="lph"><b>Order list</b><button class="btn" id="lpClose" type="button">Close</button></div>
+    <div class="lhelp" id="lpSub"></div>
+    <div id="lpRows"></div>
+    <div class="lpb">
+      <button class="btn pri" id="lpCopy" type="button">Copy list</button>
+      <button class="btn" id="lpShare" type="button" hidden>Share</button>
+      <button class="btn" id="lpClear" type="button">Clear list</button>
+    </div>
+    <div class="lhelp">Copy gives one part per line: SAP material no., quantity, unit, SAP name, maker part no., with a tab between them, so it pastes into Excel columns. The list is kept on this device only.</div>
+  </div>
 </div>
 <div id="zoom" hidden><img id="zoomimg" alt=""></div>
 <div id="toast"></div>
@@ -241,6 +298,8 @@ const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 const toB64 = u8 => btoa(String.fromCharCode.apply(null, Array.from(u8)));
 function save(k, v){ try{ v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); }catch(_){} }
 function load(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
+function loadJ(k){ try { return JSON.parse(load(k) || 'null'); } catch(_) { return null; } }
+function saveJ(k, v){ save(k, v == null ? null : JSON.stringify(v)); }
 
 async function deriveRaw(code){
   const norm = code.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -295,8 +354,10 @@ if (window.xdfOfflineRefresh) window.xdfOfflineRefresh();
 // tools: [groupItem, cmd, drawing, description, qty, kg, page]
 // pages: [listIdx, page, title, [lines], [cmd numbers], systemIdx or -1]
 // oesap / cmdsap: {OE or CMD no.: [[SAP no., SAP description], ...]}   saprecs: [kindIdx, maker no., SAP no., SAP description, [SAP equipment names]]
+// sig:   [signal tag, designation, WinGD part no., range / remark, IO type, moduleIdx, [[SAP no., SAP description], ...]]
+// uom:   {SAP no.: unit of measure} for the materials SAP does not count in EA (each)
 const CH = D.chapters, LISTS = D.lists, SYS = D.systems || [], rows = [];
-const OESAP = D.oesap || {}, CMDSAP = D.cmdsap || {}, SAPK = D.sapkinds || [];
+const OESAP = D.oesap || {}, CMDSAP = D.cmdsap || {}, SAPK = D.sapkinds || [], UOM = D.uom || {}, SIGSEC = D.sigsec || [];
 for (const r of D.spc){ const c = CH[r[0]];
   rows.push({t:'spc', grp:c[0], title:c[1], sys:SYS[c[3]], pdfR:[c[4], c[5]], catR:[c[6], c[7]],
     pos:r[1], oe:r[2], qty:r[3], lvl:r[4], name:r[5], rem:r[6], kg:r[7], asm:r[8], pdf:r[9], pg:r[10], sap:OESAP[r[2]] || []}); }
@@ -311,7 +372,20 @@ for (const r of (D.saprecs || []))
   rows.push({t:'sap', k:r[0], kind:SAPK[r[0]], mk:r[1], sapno:r[2], name:r[3], eq:r[4] || []});
 
 const norm = s => String(s == null ? '' : s).toLowerCase();
-const squash = s => norm(s).replace(/[^a-z0-9\u4e00-\u9fff]/g, '');
+const squash = s => norm(s).replace(/[^a-z0-9一-鿿]/g, '');
+function tagList(tag){        // a tag range (XXnn01-05C) stands for XXnn01C ... XXnn05C, one signal per cylinder
+  const m = /^([A-Z]{2})(\d{2})(\d{2})-(\d{2})([A-Z]?)$/.exec(tag);
+  if (!m) return [tag];
+  const out = [];
+  for (let n = +m[3]; n <= +m[4] && out.length < 20; n++) out.push(m[1] + m[2] + String(n).padStart(2, '0') + m[5]);
+  return out.length ? out : [tag];
+}
+for (const r of (D.sig || [])){
+  const tags = tagList(r[0]), set = new Set([squash(r[0])]);
+  for (const t of tags){ set.add(squash(t)); set.add(squash(t.replace(/[A-Z]$/, ''))); }
+  rows.push({t:'sig', tag:r[0], tags, tagset:set, name:r[1], part:r[2], rng:r[3], io:r[4], sec:SIGSEC[r[5]] || '', sap:r[6] || []});
+}
+
 // squash(), but with the first letter of every word in upper case. A search word made only of letters and
 // typed without punctuation ("oring" for O-RING) must start where a word starts, so it cannot match inside
 // another word ("mooring"). Words with digits (part numbers) may still match anywhere.
@@ -361,11 +435,18 @@ function index(r){
   else if (r.t === 'tool') parts = [r.cmd, r.dwg, r.name, r.gi, 'tool tools 50043150', sapTxt(r.sap)];
   else if (r.t === 'page') parts = [r.title, r.lines.join(' '), r.cmds.join(' '), r.list.id, r.cmds.map(n => sapTxt(CMDSAP[n] || [])).join(' ')];
   else if (r.t === 'special') parts = [r.name, r.sub, r.oe, r.parker, r.label, r.label.replace(/\s+/g, ''), r.details.join(' '), r.manual, sapTxt(r.sap), r.extra, r.tag];
-  else if (r.t === 'eq') parts = [r.name, r.tech, r.no, r.bom, r.floc, 'machine equipment'];
+  else if (r.t === 'eq') parts = [r.name, r.tech, r.no, r.bom, r.floc];
+  else if (r.t === 'sig') parts = [r.tag, r.tags.join(' '), r.name, r.part, r.rng, r.sec, sapTxt(r.sap)];
   else parts = [r.mk, r.sapno, r.name, r.kind, r.eq.join(' '), mkTxt(r.sapno)];
   r.hay = norm(parts.join(' | '));
+  r.nm = r.name ? norm(r.name) : '';
   r.hayB = squashB(r.hay);
   r.hayS = r.hayB.toLowerCase();
+  if (r.t === 'special'){     // what the pinned card is really about: only a search for one of these puts it first
+    r.key = norm([r.name, r.oe, r.parker, r.label, r.label.replace(/\s+/g, ''), r.extra].join(' | '));
+    r.keyB = squashB(r.key);
+    r.keyS = r.keyB.toLowerCase();
+  }
   return r;
 }
 rows.forEach(index);
@@ -375,8 +456,10 @@ const MAIN_N = rows.length;
 // D.mach: [[equipment no., name, BOM no., [item no., SAP no., item no., SAP no., ...], technical ID, functional location]]
 // for the main engine. The technical ID (REEF-nnn-nnn-nn) is the machine's code on board.
 // Other machinery has the same shape in its own file (see loadOther), with material indexes in place of SAP nos.
+// OPT.other is true only while the other machinery data is loaded and wanted; WANT is what the switch says.
 const HAS_MACH = !!D.mach, OTHER = (D.meta && D.meta.other) || null;
-const OPT = {other: !!OTHER && load('xdf-opt-other') === '1', mach: HAS_MACH && load('xdf-opt-mach') === '1'};
+const OPT = {other: false, mach: HAS_MACH && load('xdf-opt-mach') === '1'};
+let WANT = !!OTHER && load('xdf-opt-other') === '1';
 const EQS = [], CHAIN = new Map(), SAPINFO = new Map();
 const pad4 = n => String(n).padStart(4, '0');
 for (const k in OESAP) for (const s of OESAP[k]) SAPINFO.set(s[0], [s[1], k]);
@@ -406,59 +489,311 @@ function updateCount(){
   return n;
 }
 $('foot').innerHTML = esc(D.meta.source) +
+  (D.sigsrc ? '<br>Sensor tags: ' + esc(D.sigsrc) + '.' : '') +
   (D.oesap ? '<br>SAP material numbers are from the ME1 equipment BOM. The same SAP no. applies to ME2 (both 5X72DF-2.1).' : '') +
-  '<br>Always confirm a number on the catalogue or list page before ordering.' +
-  '<br><button class="link" id="forget">Forget access code on this device</button>';
+  '<br>Always confirm a number on the catalogue or list page before ordering.';
 
 const exPart = rows.find(r => r.t === 'spc' && r.sap.length === 1 && r.grp === '5556') || rows.find(r => r.t === 'spc' && r.sap.length === 1);
-const EXAMPLES = (exPart ? [exPart.oe, exPart.sap[0][0]] : []).concat(['fuel pump seal', 'o-ring 2124', 'exhaust valve', 'torque spanner']);
-let filter = 'all', shown = 50;
+const EXAMPLES = (exPart ? [exPart.oe, exPart.sap[0][0]] : []).concat(['fuel pump seal', 'o-ring 2124', 'exhaust valve', 'torque spanner'],
+  D.sig && D.sig.length ? [D.sig[0][0].replace(/-\d\d/, '').replace(/[A-Z]$/, '')] : []);
+const FNAME = {spc:'WinGD', yard:'Yard', sap:'SAP only', eq:'Machines'};
+const NOHL = [];
+let filter = 'all', shown = 50, cur = null, backTo = null, restoreY = null, stBase = '';
 const $q = $('q'), $out = $('out'), $st = $('status'), $clr = $('clr');
 
 function esc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+// Marks the search words in a text. The text is escaped piece by piece, so a short search word can never
+// land inside "&amp;" and break it.
 function hl(text, toks){
-  const s = esc(text);
-  if (!toks.length) return s;
-  const re = new RegExp('(' + toks.map(t => esc(t).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'gi');
-  return s.replace(re, '<mark>$1</mark>');
+  const s = String(text == null ? '' : text);
+  if (!toks.re) return esc(s);
+  let out = '', last = 0, m;
+  toks.re.lastIndex = 0;
+  while ((m = toks.re.exec(s))){
+    if (!m[0]){ toks.re.lastIndex++; continue; }
+    out += esc(s.slice(last, m.index)) + '<mark>' + esc(m[0]) + '</mark>';
+    last = m.index + m[0].length;
+  }
+  return out + esc(s.slice(last));
 }
-function search(q){
-  const toks = norm(q).split(/\s+/).filter(Boolean);
-  const res = [];
-  for (const r of rows){
-    if (!inMode(r)) continue;
-    if (filter === 'spc' && r.t !== 'spc' && r.t !== 'special') continue;
-    if (filter === 'yard' && r.t !== 'tool' && r.t !== 'page') continue;
-    if (filter === 'sap' && r.t !== 'sap' && r.t !== 'special') continue;
-    if (filter === 'eq' && r.t !== 'eq') continue;
-    const more = OPT.other && r.hayO, hay = more ? r.hay + r.hayO : r.hay;
-    const hayB = more ? r.hayB + r.hayOB : r.hayB, hayS = more ? r.hayS + r.hayOS : r.hayS;
-    let ok = true, score = 0;
-    for (const t of toks){
-      const st = squash(t), alpha = /^[a-z]+$/.test(st);
-      const i = hay.indexOf(t);
-      let viaSquash = false;
-      if (i === 0) score += 3;
-      else if (i > 0) score += wordStart(hay, i) ? 2 : 1;          // a whole-word start ranks above a match inside a word
-      else if (st.length >= 3 && squashHit(hayS, hayB, st, alpha)){ score += 2; viaSquash = true; }
-      else { ok = false; break; }
-      if (r.oe && squash(r.oe) === st) score += 60;
-      if (r.cmd === t || (r.cmds && r.cmds.indexOf(t) >= 0)) score += 60;
-      if (hasSap(r, t) || (r.mk && squash(r.mk) === st) || mkExact(r, st)) score += 60;
-      if (r.parker && (squash(r.parker) === st || squash(r.label.replace(/\s*ELEMENT$/i, '')) === st)) score += 60;
-      if (r.t === 'eq' && (r.no === t || r.bom === t || norm(r.tech) === t)) score += 60;
-      if ((r.grp && r.grp === t) || (r.gi && r.gi.indexOf(t) === 0)) score += 6;
-      if (r.name){
-        const nm = norm(r.name);
-        if (nm.indexOf(t) >= 0) score += 2;
-        else if (viaSquash){ const nb = squashB(nm); if (squashHit(nb.toLowerCase(), nb, st, alpha)) score += 2; }
+function hits(text, toks){ if (!toks.re) return false; toks.re.lastIndex = 0; return toks.re.test(text); }
+
+// ---------- search words: plurals, short forms, two-letter words ----------
+// The catalogue writes words out (VALVE, BEARING); SAP shortens them (VLV, BRG). So a search word also tries
+// the other forms of the same word. Each line: [full words], [short forms]. A short form only counts as a
+// whole word, with or without a dot or slash between its letters (VV = V/V, TC = T/C).
+const SYN = [
+  [['valve'], ['vlv', 'vv']], [['pump'], ['pmp', 'pp']], [['bearing'], ['brg', 'brng']], [['cylinder'], ['cyl']],
+  [['exhaust'], ['exh']], [['servo'], ['srvo']], [['hexagon'], ['hex', 'hxgn']], [['temperature'], ['temp', 'tmp']],
+  [['pressure'], ['press']], [['lubricating', 'lubrication'], ['lub', 'lubr', 'lube']], [['control'], ['cntrl', 'ctrl']],
+  [['piston'], ['pstn']], [['water'], ['wtr']], [['economiser', 'economizer'], []], [['assembly'], ['assy']],
+  [['turbocharger'], ['tc']], [['injection', 'injector'], ['inj']]
+];
+// Different names for the same thing: a search for one also finds the others.
+const PHRASE = [['piston crown', 'piston head'], ['big end', 'bottom end', 'crank pin'], ['stuffing box', 'gland box'],
+  ['nrv', 'non return'], ['gav', 'gas admission']];
+const reEsc = s => s.replace(/[.*+?^${}()|[\]\\\/-]/g, '\\$&');
+const dotted = w => w.split('').map(reEsc).join('[./]?');
+// One search word. A word of one or two letters (FO, LO, TC, O) must be a whole word, and LO also finds
+// L.O and L/O. A word of three letters must start a word (EXH finds EXHAUST, ING does not find BEARING).
+// Longer words and words with digits match anywhere, also when typed without their punctuation.
+function mk0(t){
+  const st = squash(t), alpha = /^[a-z]+$/.test(st), m = {t, st, alpha, src: reEsc(t), re: null};
+  if (/^[a-z]([./][a-z]){1,3}\.?$/.test(t) || (alpha && st === t && st.length <= 2)) m.src = '(?<![a-z])' + dotted(st) + '(?![a-z])';
+  else if (alpha && st === t && st.length === 3) m.src = '(?<![a-z])' + t;
+  else return m;
+  m.re = new RegExp(m.src);
+  return m;
+}
+const mkLong = w => { const src = '(?<![a-z0-9])' + reEsc(w); return {t:w, st:w, alpha:true, src, re:new RegExp(src)}; };
+const mkShort = w => { const src = '(?<![a-z0-9])' + dotted(w) + '(?![a-z0-9])'; return {t:w, st:w, alpha:true, src, re:new RegExp(src)}; };
+function parseQuery(q){
+  const words = norm(q).split(/\s+/).filter(Boolean), terms = [];
+  for (let i = 0; i < words.length; i++){
+    const w = words[i], two = i + 1 < words.length ? w + ' ' + words[i + 1] : '';
+    const g2 = two && PHRASE.find(g => g.indexOf(two) >= 0);
+    if (g2){
+      const alts = [[mk0(w), mk0(words[i + 1])]].concat(g2.filter(x => x !== two).map(x => x.split(' ').map(mk0)));
+      alts.j = [w + words[i + 1]];
+      terms.push(alts);
+      i++;
+      continue;
+    }
+    const alts = [[mk0(w)]], forms = [w];
+    if (alts[0][0].re && /^[a-z]+$/.test(w)){      // a short word may be written together with its neighbour: CRANK PIN = CRANKPIN, LUB OIL = LubOil
+      const j = alts.j = [];
+      if (i > 0 && /^[a-z]+$/.test(words[i - 1])) j.push(words[i - 1] + w);
+      if (i + 1 < words.length && /^[a-z]+$/.test(words[i + 1])) j.push(w + words[i + 1]);
+    }
+    const g1 = PHRASE.find(g => g.indexOf(w) >= 0);
+    if (g1) for (const x of g1) if (x !== w) alts.push(x.split(' ').map(mk0));
+    if (/^[a-z][a-z-]{2,}s$/.test(w) && !/(ss|us|is)$/.test(w)){          // plural: also try the word without its s
+      forms.push(w.slice(0, -1));
+      if (/(ch|sh|ss|x|z)es$/.test(w)) forms.push(w.slice(0, -2));
+      if (/ies$/.test(w)) forms.push(w.slice(0, -3) + 'y');
+    }
+    for (const f of forms.slice(1)) alts.push([mk0(f)]);
+    const seen = new Set(forms);
+    for (const f of forms){
+      const fs = f.replace(/[./]/g, '');
+      for (const g of SYN){
+        if (g[0].indexOf(fs) < 0 && g[1].indexOf(fs) < 0) continue;
+        for (const x of g[0]) if (!seen.has(x)){ seen.add(x); alts.push([mkLong(x)]); }
+        for (const x of g[1]) if (!seen.has(x)){ seen.add(x); alts.push([mkShort(x)]); }
       }
     }
-    if (ok) res.push([score + (r.t === 'special' ? 100 : 0) + (r.t === 'eq' ? 40 : 0), r]);
+    terms.push(alts);
+  }
+  const toks = [], srcs = [];
+  for (const alts of terms) for (const a of alts) for (const m of a){ toks.push(m.t); srcs.push(m.src); }
+  if (srcs.length) toks.re = new RegExp(srcs.join('|'), 'gi');
+  return {terms, toks};
+}
+// 0 = the word is not there. 3 = at the very start, 2 = at the start of a word, 1 = inside a word,
+// -2 = found only without its punctuation.
+function matchTok(m, hay, hayS, hayB){
+  if (m.re){ const x = m.re.exec(hay); return x ? (x.index === 0 ? 3 : 2) : 0; }
+  const i = hay.indexOf(m.t);
+  if (i === 0) return 3;
+  if (i > 0) return wordStart(hay, i) ? 2 : 1;
+  return (m.st.length >= 3 && squashHit(hayS, hayB, m.st, m.alpha)) ? -2 : 0;
+}
+function startsWord(hay, s){      // s is in hay, at the start of a word
+  for (let i = hay.indexOf(s); i >= 0; i = hay.indexOf(s, i + 1)) if (i === 0 || wordStart(hay, i)) return true;
+  return false;
+}
+function bonus(r, m, viaSquash){
+  const t = m.t, st = m.st;
+  let b = 0;
+  if (r.oe && squash(r.oe) === st) b += 60;
+  if (r.cmd === t || (r.cmds && r.cmds.indexOf(t) >= 0)) b += 60;
+  if (hasSap(r, t) || (r.mk && squash(r.mk) === st) || mkExact(r, st)) b += 60;
+  if (r.parker && (squash(r.parker) === st || squash(r.label.replace(/\s*ELEMENT$/i, '')) === st)) b += 60;
+  if (r.t === 'eq' && (r.no === t || r.bom === t || norm(r.tech) === t)) b += 60;
+  if (r.t === 'sig' && (r.tagset.has(st) || (!!r.part && squash(r.part) === st))) b += 60;
+  if ((r.grp && r.grp === t) || (r.gi && r.gi.indexOf(t) === 0)) b += 6;
+  if (r.nm){                  // the word is in the part's own name, not only in its group or assembly
+    if (m.re ? m.re.test(r.nm) : r.nm.indexOf(t) >= 0) b += 2;
+    else if (viaSquash){ const nb = squashB(r.nm); if (squashHit(nb.toLowerCase(), nb, st, m.alpha)) b += 2; }
+  }
+  return b;
+}
+// The whole search text is exactly one number of this card (also a number with a space in it, e.g. "100 110").
+function exactFn(q){
+  const qs = squash(q), qt = q.trim();
+  return r => !!((r.oe && squash(r.oe) === qs) || r.cmd === qt || (r.cmds && r.cmds.indexOf(qt) >= 0) ||
+    hasSap(r, qt) || (r.mk && squash(r.mk) === qs) || mkExact(r, qs) ||
+    (r.parker && (squash(r.parker) === qs || squash(r.label.replace(/\s*ELEMENT$/i, '')) === qs)) ||
+    (r.t === 'eq' && (r.no === qt || r.bom === qt || norm(r.tech) === norm(qt))) ||
+    (r.t === 'sig' && (r.tagset.has(qs) || (!!r.part && squash(r.part) === qs))));
+}
+const inFilter = (r, f) => f === 'all' ||
+  (f === 'spc' ? (r.t === 'spc' || r.t === 'special' || r.t === 'sig')
+   : f === 'yard' ? (r.t === 'tool' || r.t === 'page')
+   : f === 'sap' ? (r.t === 'sap' || r.t === 'special')
+   : r.t === 'eq');
+function search(q, f){
+  f = f || filter;
+  const P = parseQuery(q), exact = exactFn(q), res = [];
+  const termIn = (alts, hay, hayS, hayB) => alts.some(a => a.every(m => matchTok(m, hay, hayS, hayB)));
+  for (const r of rows){
+    if (!inMode(r) || !inFilter(r, f)) continue;
+    const more = OPT.other && r.hayO, hay = more ? r.hay + r.hayO : r.hay;
+    const hayB = more ? r.hayB + r.hayOB : r.hayB, hayS = more ? r.hayS + r.hayOS : r.hayS;
+    let ok = true, score = 0, direct = true;
+    for (const alts of P.terms){
+      let got = false;
+      for (let a = 0; a < alts.length && !got; a++){        // the word as typed first, then its other forms
+        let s = 0, all = true;
+        for (const m of alts[a]){
+          const x = matchTok(m, hay, hayS, hayB);
+          if (!x){ all = false; break; }
+          s += a ? 1 + (r.nm && (m.re ? m.re.test(r.nm) : r.nm.indexOf(m.t) >= 0) ? 2 : 0) : Math.abs(x) + bonus(r, m, x < 0);
+        }
+        if (all){ got = true; score += s; if (a) direct = false; }
+      }
+      if (!got){
+        if (alts.j && alts.j.some(x => startsWord(hay, x))) score += 1;
+        else { ok = false; break; }
+      }
+    }
+    if (!ok) continue;
+    if (exact(r)) score += 200;
+    // The pinned card goes first only for a search about it; otherwise it takes its place, after equal matches.
+    if (r.t === 'special') score += P.terms.every(alts => termIn(alts, r.key, r.keyS, r.keyB)) ? 100 : -0.5;
+    if (r.t === 'eq' && direct) score += 40;
+    res.push([score, r]);
   }
   res.sort((a, b) => b[0] - a[0]);
-  return {toks, res: res.map(x => x[1])};
+  return {toks: P.toks, res: res.map(x => x[1]), exact};
 }
+
+// ---------- kept on this device: recent searches, the last search, my starred parts, the order list ----------
+let RECENT = (loadJ('xdf-recent') || []).filter(x => typeof x === 'string').slice(0, 6);
+function addRecent(q){
+  q = q.trim().replace(/\s+/g, ' ');
+  if (q.length < 3) return;
+  const l = q.toLowerCase();
+  // the same search again moves to the front; a longer or shorter version of the newest one replaces it
+  RECENT = RECENT.filter((x, i) => { const y = x.toLowerCase(); return y !== l && !(i === 0 && (l.indexOf(y) === 0 || y.indexOf(l) === 0)); });
+  RECENT.unshift(q);
+  RECENT = RECENT.slice(0, 6);
+  saveJ('xdf-recent', RECENT);
+}
+function saveLast(){
+  saveJ('xdf-last', {q: $q.value, f: filter, n: shown, y: restoreY != null ? restoreY : Math.round(window.scrollY), t: Date.now()});
+}
+
+let STARS = (loadJ('xdf-stars') || []).filter(s => s && s.k && s.name != null);
+const STARSET = new Set(STARS.map(s => s.k));
+const starKey = r => r.t === 'spc' ? 'o:' + r.oe : r.t === 'tool' ? (r.cmd ? 'c:' + r.cmd : '') : r.t === 'sap' ? 's:' + r.sapno : r.t === 'sig' ? 'g:' + r.tag : '';
+function starSnap(r, k){      // what the start screen shows for a starred part
+  if (r.t === 'spc') return {k, q:r.oe, name:r.name, mk:r.oe, mkl:'OE part no.', sap:r.sap.slice(0, 6), src:'WinGD catalogue · group ' + r.grp, note:''};
+  if (r.t === 'tool') return {k, q:r.cmd, name:r.name || '(no name printed)', mk:r.cmd, mkl:'CMD yard no.', sap:r.sap.slice(0, 6), src:'Yard list 50043150 · tools', note:''};
+  if (r.t === 'sig') return {k, q:r.tag, name:r.name, mk:r.part || r.tag, mkl:r.part ? 'WinGD part no.' : 'Signal tag', sap:r.sap.slice(0, 6), src:'Sensor tag ' + r.tag, note:''};
+  return {k, q:r.sapno, name:r.name, mk:r.mk, mkl:'Maker part no.', sap:[[r.sapno, r.name]], src:r.other ? 'Other machinery' : (r.eq[0] || r.kind), note:''};
+}
+function starBtn(r){
+  const k = starKey(r);
+  if (!k) return '';
+  const on = STARSET.has(k);
+  return '<button class="stb" data-star="' + esc(k) + '" aria-pressed="' + on + '" aria-label="' + (on ? 'Remove from' : 'Add to') + ' my starred parts">' + (on ? '★' : '☆') + '</button>';
+}
+function starToggle(k){
+  if (STARSET.has(k)){
+    STARS = STARS.filter(s => s.k !== k);
+    STARSET.delete(k);
+    toast('Removed from my starred parts');
+  } else {
+    const r = rows.find(x => starKey(x) === k);
+    if (!r) return;
+    STARS.push(starSnap(r, k));
+    STARSET.add(k);
+    toast('★ Kept under Frequent orders on the start screen', 2200);
+  }
+  saveJ('xdf-stars', STARS.length ? STARS : null);
+}
+const noteHtml = s => '<button class="snote' + (s.note ? ' has' : '') + '" type="button">' + (s.note ? esc(s.note) + ' <span class="sub">· edit</span>' : '+ Add a note') + '</button>';
+function starCard(s){
+  const saps = s.sap || [];
+  return '<div class="card mystar hs" data-sk="' + esc(s.k) + '">' +
+    '<button class="stb" data-star="' + esc(s.k) + '" aria-pressed="true" aria-label="Remove from my starred parts">★</button>' +
+    '<div class="src">' + esc(s.src || '') + '</div>' +
+    '<div class="name">' + esc(s.name) + '</div>' +
+    (saps.length
+      ? saps.map(x => '<div class="saprow">' + pairHtml(x[0], s.mk, NOHL, x[1], saps.length > 1) + '</div>').join('')
+      : '<div class="ids">' + (s.mk ? chip(esc(s.mkl || 'Part no.'), s.mk, '', NOHL) : '') + '<span class="id none"><span class="lbl">SAP material no.</span>none</span></div>') +
+    noteHtml(s) +
+    (s.q ? '<button class="link" data-ex="' + esc(s.q) + '">Show the full card →</button>' : '') +
+  '</div>';
+}
+function starsHtml(){
+  if (!STARS.length) return '';
+  return '<h3 class="subh">My starred parts · ' + STARS.length + '</h3>' + STARS.map(starCard).join('') +
+    '<button class="link" id="starcopy">Copy my starred list (to keep a backup)</button>';
+}
+
+let LIST = loadJ('xdf-list');
+if (!LIST || !Array.isArray(LIST.items)) LIST = {t: null, items: []};
+const LISTSET = new Set(LIST.items.map(x => x.k));
+function pill(){
+  const n = LIST.items.length, b = $('listpill');
+  b.hidden = !n;
+  b.textContent = 'Order list · ' + n;
+}
+function listSave(){ saveJ('xdf-list', LIST.items.length ? LIST : null); pill(); }
+function listAdd(sap, mk, nm, multi){
+  const k = sap || 'x:' + mk;
+  if (LISTSET.has(k)) return false;
+  if (!LIST.items.length) LIST.t = new Date().toISOString();
+  LIST.items.push({k, sap, mk, nm, q: 1, u: (sap && UOM[sap]) || 'EA', multi: !!multi});
+  LISTSET.add(k);
+  listSave();
+  return true;
+}
+const NOSAPTXT = 'NO SAP NO. - request material creation';
+const listText = () => LIST.items.map(it => [it.sap || NOSAPTXT, it.q, it.u, it.nm, it.mk].join('\t')).join('\n');
+function addBtn(sap, mk, nm, multi){
+  const inl = LISTSET.has(sap || 'x:' + mk);
+  return '<button class="addl' + (inl ? ' in' : '') + '" data-add="' + esc(sap) + '" data-mk="' + esc(mk) + '" data-nm="' + esc(nm) + '"' +
+    (multi ? ' data-multi="1"' : '') + '>' + (inl ? '✓ In list' : sap ? '+ List' : '+ List (no SAP no.)') + '</button>';
+}
+function syncAddBtns(){
+  document.querySelectorAll('.addl').forEach(b => {
+    const inl = LISTSET.has(b.dataset.add || 'x:' + b.dataset.mk);
+    b.classList.toggle('in', inl);
+    b.textContent = inl ? '✓ In list' : b.dataset.add ? '+ List' : '+ List (no SAP no.)';
+  });
+}
+function listRender(){
+  const n = LIST.items.length;
+  $('lpSub').textContent = n
+    ? n + (n === 1 ? ' part' : ' parts') + (LIST.t ? ' · started ' + fmtTime(LIST.t) : '')
+    : 'The list is empty. Tap “+ List” beside a SAP material no. to add a part.';
+  $('lpRows').innerHTML = LIST.items.map(it =>
+    '<div class="lrow" data-k="' + esc(it.k) + '">' +
+      '<div class="pair">' + (it.mk ? chip('Maker part no.', it.mk, '', NOHL) : NOMK) +
+        (it.sap ? chip('SAP material no.', it.sap, 'sap', NOHL) : '<span class="id none"><span class="lbl">SAP material no.</span>none</span>') + '</div>' +
+      '<div class="sapn">' + brk(esc(it.nm)) + '</div>' +
+      (it.sap ? '' : '<div class="note">No SAP no. Search SAP (MM60 / Fiori) with the part no. and name, or request material creation.</div>') +
+      (it.multi ? '<div class="note">SAP has several materials on this part no. Check in SAP before raising the PR.</div>' : '') +
+      '<div class="lq"><button class="qb" type="button" data-q="-1" aria-label="One less">−</button>' +
+        '<input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="5" value="' + esc(it.q) + '" aria-label="Quantity">' +
+        '<button class="qb" type="button" data-q="1" aria-label="One more">+</button><span class="qu">' + esc(it.u) + '</span>' +
+        '<button class="btn" type="button" data-rm="1">Remove</button></div>' +
+    '</div>').join('');
+  $('lpCopy').disabled = $('lpClear').disabled = $('lpShare').disabled = !n;
+  $('lpShare').hidden = !navigator.share;
+  $('lpClear').classList.remove('sure');
+  $('lpClear').textContent = 'Clear list';
+}
+function listOpen(on){
+  $('listp').hidden = !on;
+  document.body.style.overflow = on ? 'hidden' : '';
+  if (on){ listRender(); $('listp').scrollTop = 0; } else syncAddBtns();
+}
+
+// ---------- cards ----------
 function chip(label, value, cls, toks){
   return '<button class="id' + (cls ? ' ' + cls : '') + '" data-copy="' + esc(value) + '"><span class="lbl">' + label + '</span>' + hl(value, toks) + '</button>';
 }
@@ -481,25 +816,29 @@ function chainHtml(sap){      // Machinery view: where this material sits in SAP
   '</div>';
 }
 const NOMK = '<span class="id none"><span class="lbl">Maker part no.</span>none in SAP</span>';
-function pairHtml(sap, mk, toks){   // the maker's part no. as SAP writes it, right beside the SAP material no.
+// The maker's part no. as SAP writes it, right beside the SAP material no., and the button that puts the
+// part on the order list. nm = the SAP name; multi = SAP has several materials on this part no.
+function pairHtml(sap, mk, toks, nm, multi){
   const m = SAPMK[sap], shown = (m && m[0]) || mk || '';
-  return '<div class="pair">' + (shown ? chip('Maker part no.', shown, '', toks) : NOMK) + chip('SAP material no.', sap, 'sap', toks) + '</div>' +
+  return '<div class="pair">' + (shown ? chip('Maker part no.', shown, '', toks) : NOMK) + chip('SAP material no.', sap, 'sap', toks) +
+    addBtn(sap, shown, nm, multi) + '</div>' +
     (m && m[1] ? '<div class="sub">SAP also lists maker no. <b>' + hl(m[1], toks) + '</b></div>' : '');
 }
-function sapRow(s, toks, mk){
-  return '<div class="saprow">' + pairHtml(s[0], mk, toks) + '<div class="sapn">' + brk(hl(s[1], toks)) + '</div></div>' + chainHtml(s[0]);
+function sapRow(s, toks, mk, multi){
+  return '<div class="saprow">' + pairHtml(s[0], mk, toks, s[1], multi) + '<div class="sapn">' + brk(hl(s[1], toks)) + '</div></div>' + chainHtml(s[0]);
 }
-function sapSection(list, toks, mk){
+function sapSection(list, toks, mk, nm){     // nm = the part's name, for a part that has no SAP no. and goes on the order list without one
   return '<div class="sapsec"><div class="saph">SAP</div>' +
     (list.length
-      ? list.map(s => sapRow(s, toks, mk)).join('') +
+      ? list.map(s => sapRow(s, toks, mk, list.length > 1)).join('') +
         (list.length > 1 ? '<div class="note">SAP has ' + list.length + ' materials on this part no. Check in SAP before raising the PR.</div>' : '')
-      : '<div class="sub">' + NOSAP + '</div>') +
+      : '<div class="sub">' + NOSAP + '</div>' + (mk && nm ? '<div class="pair" style="margin-top:8px">' + addBtn('', mk, nm, false) + '</div>' : '')) +
   '</div>';
 }
-function card(r, toks, exact){
-  const h = t => hl(t, toks);
-  const top = '<div class="card' + (exact ? ' exact' : '') + '">' + (exact ? '<div class="tag">Exact match</div>' : '');
+const IONAME = {AI:'Analogue input', AO:'Analogue output', DI:'Digital input', DO:'Digital output'};
+function card(r, toks, exact, inResults){
+  const h = t => hl(t, toks), sb = starBtn(r);
+  const top = '<div class="card' + (sb ? ' hs' : '') + (exact ? ' exact' : '') + '">' + sb + (exact ? '<div class="tag">Exact match</div>' : '');
   if (r.t === 'spc'){
     const page = r.pg
       ? 'Page <b>' + r.pg + '</b> of the Spare Parts Catalogue<br><span class="sub">PDF page ' + r.pdf + '</span>'
@@ -515,7 +854,7 @@ function card(r, toks, exact){
         field('Item', 'Pos <b>' + esc(r.pos) + '</b> · Qty <b>' + esc(r.qty) + '</b>' + (r.lvl ? ' · ' + esc(r.lvl) : '') + (r.kg ? ' · ' + esc(r.kg) : '')) +
       '</div>' +
       (yardGroups.has(r.grp.slice(0, 4)) ? '<button class="link" data-goto="' + esc(r.grp.slice(0, 4)) + '">Yard CMD numbers for group ' + esc(r.grp.slice(0, 4)) + ' →</button>' : '') +
-      sapSection(r.sap, toks, r.oe) +
+      sapSection(r.sap, toks, r.oe, r.name) +
     '</div>';
   }
   if (r.t === 'tool'){
@@ -528,10 +867,11 @@ function card(r, toks, exact){
         field('Manual', 'List of Tools 50043150, page <b>' + esc(r.page) + '</b>') +
         field('Item', 'Group item <b>' + h(r.gi) + '</b>' + (r.qty ? ' · Qty <b>' + esc(r.qty) + '</b>' : '') + (r.kg ? ' · ' + esc(r.kg) + ' kg' : '')) +
       '</div>' +
-      (r.cmd ? sapSection(r.sap, toks, r.cmd) : '') +
+      (r.cmd ? sapSection(r.sap, toks, r.cmd, r.name) : '') +
     '</div>';
   }
   if (r.t === 'special'){
+    const photo = r.photo ? '<button class="photo" data-zoom="1" aria-label="Enlarge box label photo"><img src="' + r.photo + '" alt="' + esc(r.cap) + '"></button>' : '';
     return '<div class="card special' + (exact ? ' exact' : '') + '">' +
       '<div class="tag star">★ ' + esc(r.tag) + '</div>' + (exact ? ' <div class="tag">Exact match</div>' : '') +
       '<div class="src">' + h(r.sub) + '</div>' +
@@ -541,9 +881,9 @@ function card(r, toks, exact){
         field('Label', '<b>' + h(r.label) + '</b>') +
         field('Filter', r.details.map(d => '<div>' + h(d) + '</div>').join('')) +
         field('Manual', '<span class="sub">' + h(r.manual) + '</span>' +
-          (r.photo ? '<button class="photo" data-zoom="1" aria-label="Enlarge box label photo"><img src="' + r.photo + '" alt="' + esc(r.cap) + '"></button>' : '')) +
+          (photo && inResults ? '<details><summary>Box label photo</summary>' + photo + '</details>' : photo)) +
       '</div>' +
-      sapSection(r.sap, toks, r.oe) +
+      sapSection(r.sap, toks, r.oe, r.name) +
     '</div>';
   }
   if (r.t === 'eq'){
@@ -557,6 +897,22 @@ function card(r, toks, exact){
         (r.items.length === 1 ? ' item' : ' items') + '</summary><div class="bomrows"></div></details>' +
     '</div>';
   }
+  if (r.t === 'sig'){
+    return top + '<div class="tag mtag">Sensor tag</div>' +
+      '<div class="src">WiCE-FLEX control signal list</div>' +
+      '<div class="name">' + h(r.name) + '</div>' +
+      '<div class="ids">' + chip('Signal tag', r.tag, '', toks) + (r.part ? chip('WinGD part no.', r.part, '', toks) : '') + '</div>' +
+      '<div class="fields">' +
+        (r.tags.length > 1 ? field('Tags', h(r.tags.join(', ')) + '<br><span class="sub">one per cylinder</span>') : '') +
+        (r.rng ? field('Range', h(r.rng)) : '') +
+        (r.io ? field('Signal', esc(IONAME[r.io] || r.io) + ' <span class="sub">(' + esc(r.io) + ')</span>') : '') +
+        field('Module', h(r.sec)) +
+        field('Manual', '<span class="sub">' + esc(D.sigsrc || '') + '. Text as printed in the list.</span>') +
+      '</div>' +
+      (r.part ? sapSection(r.sap, toks, r.part, r.name)
+        : '<div class="rem">No WinGD part no. is printed for this signal.</div>') +
+    '</div>';
+  }
   if (r.t === 'sap'){
     const eqs = (OPT.other && r.eqO) ? r.eq.concat(r.eqO) : r.eq;
     return top + (r.other ? (exact ? ' ' : '') + '<div class="tag mtag">Other machinery</div>' : '') + '<div class="src">' + esc(r.kind) + '</div>' +
@@ -564,14 +920,14 @@ function card(r, toks, exact){
         (eqs.length ? field('System', eqs.map(x => '<div><b>' + h(x) + '</b></div>').join('')) : '') +
         (r.k === 0 ? field('Manual', '<span class="sub">This OE no. is not in the X72DF-2.1 Spare Parts Catalogue.</span>') : '') +
       '</div>' : '') +
-      sapSection([[r.sapno, r.name]], toks, r.mk) +
+      sapSection([[r.sapno, r.name]], toks, r.mk, r.name) +
     '</div>';
   }
-  const hit = toks.length ? r.lines.filter(l => toks.some(t => norm(l).indexOf(t) >= 0)) : [];
+  const hit = r.lines.filter(l => hits(l, toks));
   const lines = (hit.length ? hit : r.lines).slice(0, 8);
   const sapRows = r.cmds.map(n => {
     const s = CMDSAP[n] || [];
-    return s.length ? s.map(x => sapRow(x, toks, n)).join('')
+    return s.length ? s.map(x => sapRow(x, toks, n, s.length > 1)).join('')
       : '<div class="saprow"><div class="pair">' + chip('Maker part no.', n, '', toks) + '</div><div class="sub">Not on the SAP equipment BOM</div></div>';
   }).join('');
   return top + '<div class="src">' + esc(r.list.name) + '</div>' +
@@ -588,54 +944,93 @@ function card(r, toks, exact){
     (sapRows ? '<div class="sapsec"><div class="saph">SAP</div>' + sapRows + '</div>' : '') +
   '</div>';
 }
+
+// ---------- the page ----------
 const moreBtn = left => '<button class="more" id="more">Show more (' + left.toLocaleString() + ' left)</button>';
+function status(base){      // the line under the filters: what is shown, and whether other machinery is in it
+  if (base != null) stBase = base;
+  const sc = OPT.other ? 'other machinery included' : otherLoading ? 'loading other machinery…' : '';
+  $st.textContent = stBase && sc ? stBase + ' · ' + sc : stBase || (sc ? sc[0].toUpperCase() + sc.slice(1) : '');
+}
+function draw(list, toks, exact, head){     // the first cards of a list; "Show more" adds to them
+  cur = {list, toks, exact};
+  $out.innerHTML = (head || '') + list.slice(0, shown).map(r => card(r, toks, exact ? exact(r) : false, true)).join('') +
+    (list.length > shown ? moreBtn(list.length - shown) : '');
+}
 function render(){
   const q = $q.value.trim();
-  $clr.hidden = !q;
-  const n = updateCount(), scope = OPT.other ? ' · other machinery included' : '';
+  $clr.hidden = !q && filter === 'all';
+  const n = updateCount();
+  const back = backTo ? '<button class="link back" id="back">← Back to ' + esc(backTo.q || 'the start screen') + '</button>' : '';
   if (q.length < 2 && filter === 'eq'){          // the list of machines
     const list = EQS.filter(inMode).sort((a, b) => (a.other - b.other) || a.name.localeCompare(b.name));
-    $st.textContent = list.length.toLocaleString() + ' machines' + (OPT.other ? scope : ' · main engine');
-    $out.innerHTML = list.slice(0, shown).map(r => card(r, [], false)).join('') + (list.length > shown ? moreBtn(list.length - shown) : '');
-    return;
-  }
-  if (q.length < 2){
-    $st.textContent = OPT.other ? 'Other machinery included' : '';
+    status(list.length.toLocaleString() + ' machines' + (OPT.other ? '' : ' · main engine'));
+    draw(list, NOHL, null, back);
+  } else if (q.length < 2){
+    cur = null;
+    status(filter === 'all' ? '' : FNAME[filter] + ' filter is on');
     const pinned = rows.filter(r => r.t === 'special');
-    $out.innerHTML = (pinned.length ? '<h2 class="pinh">Frequent orders</h2>' + pinned.map(r => card(r, [], false)).join('') : '') +
-      '<div class="empty"><p><b>Search ' + n.toLocaleString() + ' parts, tools and yard list pages.</b></p>' +
-      '<p class="tip">Type a name, an OE no., a SAP no., a CMD no. or a group. Try one of these:</p><div class="ex">' +
-      EXAMPLES.map(x =>
-        '<button data-ex="' + esc(x) + '">' + esc(x) + '</button>').join('') +
-      '</div><p class="tip">Words can be in any order. Tap a number to copy it.</p>' +
+    $out.innerHTML = back + (pinned.length || STARS.length ? '<h2 class="pinh">Frequent orders</h2>' : '') +
+      pinned.map(r => card(r, NOHL, false, false)).join('') + starsHtml() +
+      '<div class="empty"><p><b>Search ' + n.toLocaleString() + ' parts, tools, yard list pages' + (D.sig ? ' and sensor tags' : '') + '.</b></p>' +
+      '<p class="tip">Type a name, an OE no., a SAP no., a CMD no., a group' + (D.sig ? ' or a sensor tag' : '') + '.</p>' +
+      (RECENT.length
+        ? '<div class="rech"><span class="tip">Your recent searches</span></div><div class="ex">' +
+          RECENT.map(x => '<button data-ex="' + esc(x) + '">' + esc(x) + '</button>').join('') + '</div>' +
+          '<button class="link" id="recclr">Clear recent searches</button>'
+        : '<p class="tip">Try one of these:</p><div class="ex">' + EXAMPLES.map(x => '<button data-ex="' + esc(x) + '">' + esc(x) + '</button>').join('') + '</div>') +
+      '<p class="tip">Words can be in any order. Tap a number to copy it.</p>' +
+      '<p class="tip">Tap <b>☆</b> on a part to keep it here under Frequent orders. Tap <b>+ List</b> beside a SAP material no. to build an order list.</p>' +
       (OPT.mach ? '<p class="tip">Machinery view is on. Tap <b>Machines</b> for the list of machines, or type a machine name.</p>' : '') +
       '</div>';
-    return;
+  } else {
+    const {toks, res, exact} = search(q);
+    status(res.length.toLocaleString() + (res.length === 1 ? ' match' : ' matches') + (filter === 'all' ? '' : ' in ' + FNAME[filter]));
+    if (res.length) draw(res, toks, exact, back);
+    else {
+      cur = null;
+      const all = filter === 'all' ? 0 : search(q, 'all').res.length;     // a filter that hides every match must not look like "nothing found"
+      $out.innerHTML = back + '<div class="empty"><p>No match' + (filter === 'all' ? '' : ' in ' + FNAME[filter]) + '.</p>' +
+        (all ? '<p><button class="btn pri" data-setf="all">' + all.toLocaleString() + (all === 1 ? ' match' : ' matches') + ' in All – show</button></p>'
+          : '<p class="tip">' + (q.length < 3 ? 'Keep typing.' : 'Try fewer words or part of the number.') + '</p>') +
+        (OTHER && !OPT.other ? '<p class="tip">Other machinery is switched off (Options, at the bottom of the page).</p>' : '') + '</div>';
+    }
   }
-  const {toks, res} = search(q);
-  $st.textContent = res.length.toLocaleString() + (res.length === 1 ? ' match' : ' matches') + scope;
-  if (!res.length){
-    $out.innerHTML = '<div class="empty"><p>No match.</p><p class="tip">Try fewer words or part of the number.</p>' +
-      (OTHER && !OPT.other ? '<p class="tip">Other machinery is switched off.</p>' : '') + '</div>';
-    return;
+  saveLast();
+  if (restoreY != null) requestAnimationFrame(() => { if (restoreY != null) window.scrollTo(0, restoreY); });
+}
+// Draw again without losing the reader's place: open parts lists are opened again, and the switch that was
+// tapped (anchor) stays where it is on the screen.
+function rerender(anchor){
+  const open = Array.from($out.querySelectorAll('details.bom[open]')).map(d => d.dataset.eq);
+  const y0 = anchor ? anchor.getBoundingClientRect().top : 0;
+  render();
+  for (const id of open){
+    const d = $out.querySelector('details.bom[data-eq="' + id + '"]');
+    if (d){ d.dataset.done = '1'; d.open = true; bomFill(d, 0); }
   }
-  const qs = squash(q), qt = q.trim();
-  const isExact = r => (r.oe && squash(r.oe) === qs) || r.cmd === qt || (r.cmds && r.cmds.indexOf(qt) >= 0) ||
-    hasSap(r, qt) || (r.mk && squash(r.mk) === qs) || mkExact(r, qs) || (r.parker && (squash(r.parker) === qs || squash(r.label.replace(/\s*ELEMENT$/i, '')) === qs)) ||
-    (r.t === 'eq' && (r.no === qt || r.bom === qt || norm(r.tech) === norm(qt)));
-  $out.innerHTML = res.slice(0, shown).map(r => card(r, toks, isExact(r))).join('') + (res.length > shown ? moreBtn(res.length - shown) : '');
+  if (anchor) window.scrollBy(0, anchor.getBoundingClientRect().top - y0);
 }
 function setFilter(f){
   filter = f;
   document.querySelectorAll('.filters button').forEach(x => x.setAttribute('aria-pressed', x.dataset.f === f ? 'true' : 'false'));
 }
-let timer;
-$q.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => { shown = 50; render(); window.scrollTo(0, 0); }, 120); });
-$q.addEventListener('keydown', e => { if (e.key === 'Enter') $q.blur(); });
-$clr.addEventListener('click', () => { $q.value = ''; render(); $q.focus(); });
-document.querySelectorAll('.filters button').forEach(b => b.addEventListener('click', () => { setFilter(b.dataset.f); shown = 50; render(); }));
-$('optOther').addEventListener('click', () => setOther(!OPT.other));
-$('optMach').addEventListener('click', () => setMach(!OPT.mach));
+let timer, recT;
+function noteSearch(){      // remember a search that found something
+  clearTimeout(recT);
+  if ($q.value.trim().length >= 3 && cur && cur.list.length) addRecent($q.value);
+}
+$q.addEventListener('input', () => {
+  clearTimeout(timer); clearTimeout(recT);
+  backTo = null;
+  timer = setTimeout(() => { shown = 50; render(); window.scrollTo(0, 0); recT = setTimeout(noteSearch, 2500); }, 120);
+});
+$q.addEventListener('keydown', e => { if (e.key === 'Enter'){ $q.blur(); noteSearch(); } });
+$clr.addEventListener('click', () => { $q.value = ''; backTo = null; setFilter('all'); shown = 50; render(); window.scrollTo(0, 0); $q.focus(); });
+document.querySelectorAll('.filters button').forEach(b => b.addEventListener('click', () => { setFilter(b.dataset.f); shown = 50; render(); window.scrollTo(0, 0); }));
+$('optOther').addEventListener('click', e => setOther(!WANT, e.currentTarget));
+$('optMach').addEventListener('click', e => setMach(!OPT.mach, e.currentTarget));
+$('jump').addEventListener('click', () => $('opts').scrollIntoView({behavior: 'smooth', block: 'start'}));
 const BOMPAGE = 150;
 function bomFill(d, from){      // rows of one machine's parts list, a page at a time
   const e = EQS[+d.dataset.eq], box = d.querySelector('.bomrows');
@@ -644,7 +1039,8 @@ function bomFill(d, from){      // rows of one machine's parts list, a page at a
     const info = SAPINFO.get(it[1]) || ['', ''], m = SAPMK[it[1]], mk = (m && m[0]) || info[1];
     h += '<div class="brow"><span class="bit">' + pad4(it[0]) + '</span><div><div class="pair">' +
       '<button class="id sap bsap" data-copy="' + it[1] + '">' + it[1] + '</button>' +
-      (mk ? '<button class="id bsap" data-copy="' + esc(mk) + '">' + esc(mk) + '</button>' : '<span class="id bsap none">no maker no.</span>') + '</div>' +
+      (mk ? '<button class="id bsap" data-copy="' + esc(mk) + '">' + esc(mk) + '</button>' : '<span class="id bsap none">no maker no.</span>') +
+      addBtn(it[1], mk || '', info[0], false) + '</div>' +
       '<div class="bds">' + brk(esc(info[0])) + (m && m[1] ? ' <span class="sub">· SAP also lists ' + esc(m[1]) + '</span>' : '') + '</div></div></div>';
   }
   const left = e.items.length - from - BOMPAGE;
@@ -655,25 +1051,134 @@ $out.addEventListener('toggle', e => {
   const d = e.target;
   if (d && d.classList && d.classList.contains('bom') && d.open && !d.dataset.done){ d.dataset.done = '1'; bomFill(d, 0); }
 }, true);
+function addTap(e){           // "+ List": put the part on the order list, or open the list when it is already there
+  const b = e.target.closest('.addl');
+  if (!b) return false;
+  if (b.classList.contains('in')){ listOpen(true); return true; }
+  listAdd(b.dataset.add, b.dataset.mk, b.dataset.nm, b.dataset.multi === '1');
+  syncAddBtns();
+  toast('Added to the order list (' + LIST.items.length + ')');
+  return true;
+}
 $out.addEventListener('click', e => {
-  if (e.target.id === 'more'){ shown += 100; render(); return; }
-  const bm = e.target.closest('[data-bommore]');
+  const t = e.target;
+  if (t.id === 'more' && cur){        // add the next cards below; what is open above stays open
+    const from = shown;
+    shown += 100;
+    t.remove();
+    $out.insertAdjacentHTML('beforeend', cur.list.slice(from, shown).map(r => card(r, cur.toks, cur.exact ? cur.exact(r) : false, true)).join('') +
+      (cur.list.length > shown ? moreBtn(cur.list.length - shown) : ''));
+    saveLast();
+    return;
+  }
+  const bm = t.closest('[data-bommore]');
   if (bm){ const d = bm.closest('details.bom'), from = +bm.dataset.bommore; bm.remove(); bomFill(d, from); return; }
-  const z = e.target.closest('[data-zoom]');
+  if (addTap(e)) return;
+  const st = t.closest('[data-star]');
+  if (st){
+    starToggle(st.dataset.star);
+    if (st.closest('.mystar')) render();
+    else { const on = STARSET.has(st.dataset.star); st.setAttribute('aria-pressed', on); st.textContent = on ? '★' : '☆'; st.setAttribute('aria-label', (on ? 'Remove from' : 'Add to') + ' my starred parts'); }
+    return;
+  }
+  const sn = t.closest('.snote');
+  if (sn){                            // the note of a starred part, edited in place
+    const s = STARS.find(x => x.k === sn.closest('[data-sk]').dataset.sk);
+    if (!s) return;
+    const inp = document.createElement('input');
+    inp.className = 'snin'; inp.type = 'text'; inp.maxLength = 80; inp.value = s.note || '';
+    inp.placeholder = 'Note, e.g. where it is used or how many to keep';
+    inp.setAttribute('aria-label', 'Note for ' + s.name);
+    sn.replaceWith(inp);
+    inp.focus();
+    inp.addEventListener('keydown', ev => { if (ev.key === 'Enter') inp.blur(); });
+    inp.addEventListener('blur', () => {
+      s.note = inp.value.trim();
+      saveJ('xdf-stars', STARS);
+      inp.insertAdjacentHTML('afterend', noteHtml(s));
+      inp.remove();
+    }, {once: true});
+    return;
+  }
+  if (t.id === 'starcopy'){
+    copyText(STARS.map(s => [s.mk, (s.sap || []).map(x => x[0]).join(' / '), s.name, s.note || ''].join('\t')).join('\n'), 'Starred list copied (' + STARS.length + ')');
+    return;
+  }
+  if (t.id === 'recclr'){ RECENT = []; saveJ('xdf-recent', null); render(); return; }
+  if (t.id === 'back' && backTo){
+    const b = backTo;
+    backTo = null;
+    $q.value = b.q; setFilter(b.f); shown = 50; render(); window.scrollTo(0, b.y);
+    return;
+  }
+  const sf = t.closest('[data-setf]');
+  if (sf){ setFilter(sf.dataset.setf); shown = 50; render(); return; }
+  const z = t.closest('[data-zoom]');
   if (z){ const im = z.querySelector('img'); $('zoomimg').src = im.src; $('zoomimg').alt = im.alt; $('zoom').hidden = false; return; }
-  const ex = e.target.closest('[data-ex]');
-  if (ex){ $q.value = ex.dataset.ex; shown = 50; render(); return; }
-  const g = e.target.closest('[data-goto]');
-  if (g){ setFilter('yard'); $q.value = g.dataset.goto; shown = 50; render(); window.scrollTo(0, 0); return; }
+  const ex = t.closest('[data-ex]');
+  if (ex){ $q.value = ex.dataset.ex; backTo = null; setFilter('all'); shown = 50; render(); window.scrollTo(0, 0); return; }
+  const g = t.closest('[data-goto]');
+  if (g){        // to the yard list pages of this group, with a way back to where the reader was
+    backTo = {q: $q.value, f: filter, y: window.scrollY};
+    setFilter('yard'); $q.value = g.dataset.goto; shown = 50; render(); window.scrollTo(0, 0);
+    return;
+  }
   copyTap(e);
 });
-function copyTap(e){
-  const b = e.target.closest('[data-copy]');
-  if (!b) return;
-  const v = b.dataset.copy, done = () => toast('Copied ' + v);
+function copyText(v, msg){
+  const done = () => toast(msg);
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(done, () => fallback(v, done));
   else fallback(v, done);
 }
+function copyTap(e){
+  const b = e.target.closest('[data-copy]');
+  if (!b) return;
+  copyText(b.dataset.copy, 'Copied ' + b.dataset.copy);
+  noteSearch();
+}
+
+// ---------- the order list ----------
+$('listpill').addEventListener('click', () => listOpen(true));
+$('lpClose').addEventListener('click', () => listOpen(false));
+$('lpCopy').addEventListener('click', () => copyText(listText(), 'Order list copied (' + LIST.items.length + (LIST.items.length === 1 ? ' part)' : ' parts)')));
+$('lpShare').addEventListener('click', () => { try { navigator.share({title: 'Order list', text: listText()}).catch(() => {}); } catch(_) {} });
+$('lpClear').addEventListener('click', e => {
+  const b = e.currentTarget;
+  if (!b.classList.contains('sure')){ b.classList.add('sure'); b.textContent = 'Tap again to clear the list'; return; }
+  LIST = {t: null, items: []};
+  LISTSET.clear();
+  listSave();
+  listRender();
+});
+$('lpRows').addEventListener('click', e => {
+  const row = e.target.closest('.lrow');
+  if (!row) return;
+  const it = LIST.items.find(x => x.k === row.dataset.k);
+  if (!it) return;
+  if (e.target.closest('[data-rm]')){
+    LIST.items = LIST.items.filter(x => x !== it);
+    LISTSET.delete(it.k);
+    if (!LIST.items.length) LIST.t = null;
+    listSave();
+    listRender();
+    return;
+  }
+  const qb = e.target.closest('[data-q]');
+  if (qb){
+    it.q = Math.max(1, Math.min(99999, (+it.q || 1) + (+qb.dataset.q)));
+    row.querySelector('input').value = it.q;
+    listSave();
+    return;
+  }
+  copyTap(e);
+});
+$('lpRows').addEventListener('change', e => {
+  const row = e.target.closest('.lrow'), it = row && LIST.items.find(x => x.k === row.dataset.k);
+  if (!it) return;
+  it.q = Math.max(1, Math.min(99999, parseInt(e.target.value, 10) || 1));
+  e.target.value = it.q;
+  listSave();
+});
 
 // ---------- bottom of the page: the list of SAP equipment with their codes ----------
 function eqListRender(){
@@ -692,7 +1197,7 @@ function eqListRender(){
       h += '<div class="eqg">' + (grp ? 'Other machinery' : 'Main engine') + ' · ' + show.filter(x => x.other === grp).length.toLocaleString() + '</div>';
     }
     h += '<div class="eqr"><div class="eqn">' + esc(e.name) + '</div><div class="ids">' +
-      (e.tech ? chip('Technical ID', e.tech, '', []) : '') + chip('Equipment no.', e.no, '', []) + chip('BOM no.', e.bom, '', []) + '</div>' +
+      (e.tech ? chip('Technical ID', e.tech, '', NOHL) : '') + chip('Equipment no.', e.no, '', NOHL) + chip('BOM no.', e.bom, '', NOHL) + '</div>' +
       '<div class="eqm">' + (e.floc ? 'Functional location <b>' + esc(e.floc) + '</b> · ' : '') +
         e.items.length.toLocaleString() + (e.items.length === 1 ? ' part' : ' parts') + ' in its list</div></div>';
   }
@@ -702,8 +1207,19 @@ $('eqlist').addEventListener('toggle', eqListRender);
 $('eqf').addEventListener('input', eqListRender);
 $('eqrows').addEventListener('click', copyTap);
 $('zoom').addEventListener('click', () => { $('zoom').hidden = true; });
-$('foot').addEventListener('click', e => {
-  if (e.target.id === 'forget'){ save(KEYNAME, null); toast('Access code forgotten'); setTimeout(() => location.reload(), 600); }
+let forgetT;
+$('forget').addEventListener('click', e => {      // two taps, so a slip of the thumb does not lock the app
+  const b = e.currentTarget;
+  if (!b.classList.contains('sure')){
+    b.classList.add('sure');
+    b.textContent = 'Tap again to forget the code. You will have to type it again.';
+    clearTimeout(forgetT);
+    forgetT = setTimeout(() => { b.classList.remove('sure'); b.textContent = 'Forget access code on this device'; }, 6000);
+    return;
+  }
+  save(KEYNAME, null);
+  toast('Access code forgotten');
+  setTimeout(() => location.reload(), 600);
 });
 function fallback(v, done){
   const t = document.createElement('textarea'); t.value = v; t.setAttribute('readonly', '');
@@ -713,68 +1229,96 @@ function fallback(v, done){
 let tt;
 function toast(m, ms){ const el = $('toast'); el.textContent = m; el.classList.add('on'); clearTimeout(tt); tt = setTimeout(() => el.classList.remove('on'), ms || 1400); }
 
-// ---------- the two switches ----------
+// ---------- the two switches (Options, at the bottom of the page) ----------
 function syncOpts(){
-  $('optOther').setAttribute('aria-checked', OPT.other ? 'true' : 'false');
+  $('optOther').setAttribute('aria-checked', WANT ? 'true' : 'false');
   $('optMach').setAttribute('aria-checked', OPT.mach ? 'true' : 'false');
+  const msg = !WANT || OPT.other ? '' : otherLoading ? 'Loading other machinery…'
+    : 'Not on this phone yet. It switches on by itself when the download has finished.';
+  $('optOtherMsg').hidden = !msg;
+  $('optOtherMsg').textContent = msg;
   $('chipEq').hidden = !OPT.mach;
   $('legend').hidden = !OPT.mach;
-  document.querySelector('.filters').classList.toggle('wrap', OPT.mach);
 }
-function setMach(on){
+function setMach(on, anchor){
   OPT.mach = on;
   save('xdf-opt-mach', on ? '1' : null);
   if (!on && filter === 'eq') setFilter('all');
-  syncOpts(); shown = 50; render();
+  syncOpts(); shown = 50; rerender(anchor);
 }
-async function setOther(on){
+// The switch shows what was asked for (WANT) at once. The data follows: other machinery is only counted as
+// included once it is loaded, and a tap made while it loads is the one that counts.
+async function setOther(on, anchor){
+  WANT = on;
+  save('xdf-opt-other', on ? '1' : null);
   if (on && !otherData){
-    OPT.other = true; syncOpts();
-    $st.textContent = 'Loading other machinery…';
-    if (!(await loadOther())){
-      on = false;
-      toast('Other machinery is not on this phone yet. Connect to the internet once.', 4500);
+    otherLoading = true;
+    syncOpts(); status();
+    const ok = await loadOther();
+    otherLoading = false;
+    if (!ok){
+      if (WANT && anchor) toast('Other machinery is not on this phone yet. It switches on when it has downloaded.', 4500);
+      otherRetry();
     }
   }
-  OPT.other = on;
-  save('xdf-opt-other', on ? '1' : null);
-  syncOpts(); shown = 50; render(); eqListRender(); bottom();
+  const eff = WANT && !!otherData;
+  if (eff !== OPT.other){
+    OPT.other = eff;
+    syncOpts(); shown = Math.max(shown, 50); rerender(anchor); eqListRender();
+  } else { syncOpts(); status(); }
+  bottom();
 }
 
-// ---------- other machinery: its own encrypted file, kept in its own cache ----------
+// ---------- other machinery: its own encrypted file, kept in its own store ----------
 // Removing the feature (tools/config.json, "other_machinery": false) drops D.meta.other; the page then
-// hides the switch and deletes the stored file from the phone.
+// hides the switch and the stored file is deleted from the phone.
 const OCACHE = 'xdf-other';
-let otherData = null, otherBusy = null, otherState = OTHER ? 'checking' : 'none';
-async function otherBytes(net){
-  const inl = $('otherdata');
-  if (inl) return b64(inl.textContent.trim());           // claude.ai view: the data is inside the page
-  let c = null;
+let otherData = null, otherBusy = null, otherDl = null, otherLoading = false, otherTries = 0, otherState = OTHER ? 'checking' : 'none';
+async function otherDrop(){ try { await (await caches.open(OCACHE)).delete(OTHER.file); } catch(_) {} }
+async function otherStored(){        // the stored copy, when it is complete
   try {
-    c = await caches.open(OCACHE);
-    const hit = await c.match(OTHER.file);
-    if (hit){ const u8 = new Uint8Array(await hit.arrayBuffer()); if (u8.length === OTHER.bytes) return u8; }
+    const c = await caches.open(OCACHE), hit = await c.match(OTHER.file);
+    if (!hit) return null;
+    const u8 = new Uint8Array(await hit.arrayBuffer());
+    if (u8.length === OTHER.bytes) return u8;
+    await c.delete(OTHER.file);
   } catch(_) {}
-  if (!net) return null;
-  const resp = await fetch(OTHER.file);
-  if (!resp.ok) throw new Error('HTTP ' + resp.status);
-  const u8 = new Uint8Array(await resp.arrayBuffer());
-  if (u8.length !== OTHER.bytes) throw new Error('incomplete download');
-  if (c){
+  return null;
+}
+function otherFetch(){               // download and store it; an older copy goes only after the new one is in
+  if (!otherDl) otherDl = (async () => {
+    const resp = await fetch(OTHER.file);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const u8 = new Uint8Array(await resp.arrayBuffer());
+    if (u8.length !== OTHER.bytes) throw new Error('incomplete download');
     try {
+      const c = await caches.open(OCACHE);
       await c.put(OTHER.file, new Response(u8, {headers: {'Content-Type': 'application/octet-stream'}}));
       for (const k of await c.keys()) if (!k.url.endsWith('/' + OTHER.file)) await c.delete(k);
     } catch(_) {}
-  }
-  return u8;
+    return u8;
+  })().finally(() => { otherDl = null; });
+  return otherDl;
+}
+async function blobOk(u8){           // does the stored copy open with this phone's key? (checks it without unpacking it)
+  try {
+    const key = await crypto.subtle.importKey('raw', rawKey, 'AES-GCM', false, ['decrypt']);
+    await crypto.subtle.decrypt({name:'AES-GCM', iv:u8.slice(0, 12)}, key, u8.slice(12));
+    return true;
+  } catch(_) { return false; }
 }
 function loadOther(){
   if (otherData) return Promise.resolve(true);
   if (!otherBusy) otherBusy = (async () => {
     try {
-      const u8 = await otherBytes(true);
-      if (!u8) return false;
-      const o = await openBlob(u8);                       // {eq: machines, mat: [[SAP no., description, maker no.]]}
+      const inl = $('otherdata');
+      let o = null;                                       // {eq: machines, mat: [[SAP no., description, maker no.]]}
+      if (inl) o = await openBlob(b64(inl.textContent.trim()));      // claude.ai view: the data is inside the page
+      else {
+        const st = await otherStored();
+        if (st){ try { o = await openBlob(st); } catch(_) { await otherDrop(); } }     // a stored copy that does not open is thrown away
+        if (!o){ otherState = 'downloading'; bottom(); o = await openBlob(await otherFetch()); }
+      }
       const mainSap = new Set(SAPINFO.keys()), shared = new Map();
       for (const m of o.mat) if (!mainSap.has(m[0])){ SAPINFO.set(m[0], [m[1], m[2]]); if (m[3]) SAPMK[m[0]] = ['', m[3]]; }
       addMachines(o.eq, true, i => o.mat[i][0]);
@@ -790,24 +1334,35 @@ function loadOther(){
         if (extra.length){ r.eqO = extra; r.hayO = ' | ' + norm(extra.join(' ')); r.hayOB = squashB(r.hayO); r.hayOS = r.hayOB.toLowerCase(); }
       }
       otherData = o;
-      otherState = $('otherdata') ? 'inline' : 'stored';
+      otherState = inl ? 'inline' : 'stored';
       return true;
     } catch(_) {
-      try { await caches.delete(OCACHE); } catch(__) {}
+      otherState = 'missing';                             // nothing is deleted and the switch keeps its wish: it is tried again
       return false;
     } finally { otherBusy = null; }
   })();
   return otherBusy;
 }
-async function otherPrefetch(){   // store the file for offline use without opening it
-  if (!OTHER || otherData) return;
-  try { if (await otherBytes(false)){ otherState = $('otherdata') ? 'inline' : 'stored'; return bottom(); } } catch(_) {}
+async function otherPrefetch(){      // store the file for offline use without opening it
+  if (!OTHER || otherData || otherBusy) return;
+  if ($('otherdata')){ otherState = 'inline'; return bottom(); }
+  const st = await otherStored();
+  if (st){
+    if (await blobOk(st)){ otherState = 'stored'; return bottom(); }
+    await otherDrop();
+  }
   if (navigator.onLine === false){ otherState = 'missing'; return bottom(); }
   otherState = 'downloading'; bottom();
-  try { await otherBytes(true); otherState = 'stored'; } catch(_) { otherState = 'missing'; }
+  try { await otherFetch(); otherState = 'stored'; } catch(_) { otherState = 'missing'; }
   bottom();
+  if (otherState === 'missing') otherRetry();
 }
-window.addEventListener('online', () => { if (otherState === 'missing') otherPrefetch(); });
+const otherAgain = () => { if (OTHER && !otherData && otherState === 'missing') (WANT ? setOther(true) : otherPrefetch()); };
+function otherRetry(){               // a few more tries by itself, further apart each time
+  if (otherTries >= 5) return;
+  setTimeout(() => { if (navigator.onLine !== false) otherAgain(); }, 15000 * Math.pow(2, otherTries++));
+}
+window.addEventListener('online', () => { otherTries = 0; otherAgain(); });
 
 // ---------- bottom lines: other machinery status and the page's last update ----------
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -824,7 +1379,7 @@ window.xdfExtra = () => {
     const t = otherState === 'stored' ? '✓ Other machinery (' + n + ') is stored on this device.'
       : otherState === 'inline' ? 'Other machinery (' + n + ') is included in this page.'
       : otherState === 'downloading' ? 'Other machinery: downloading for offline use…'
-      : otherState === 'missing' ? 'Other machinery is not on this device yet. Connect to the internet once.' : '';
+      : otherState === 'missing' ? 'Other machinery is not on this device yet. It downloads by itself when there is a signal.' : '';
     if (t) h += '<span class="xl' + (otherState === 'stored' ? ' ok' : '') + '">' + t + '</span>';
   }
   if (D.meta.builtAt) h += '<span class="xl">Page last updated: ' + esc(fmtTime(D.meta.builtAt)) + '</span>';
@@ -833,15 +1388,30 @@ window.xdfExtra = () => {
 function bottom(){ if (window.xdfOfflineRefresh) window.xdfOfflineRefresh(); }
 
 // ---------- start ----------
-$('opts').hidden = !(OTHER || HAS_MACH);
+$('opts').hidden = $('jump').hidden = !(OTHER || HAS_MACH);
 $('optOther').hidden = !OTHER;
 $('optMach').hidden = !HAS_MACH;
+if (OTHER) $('optOtherSub').textContent = 'The rest of the ship: ' + OTHER.eq.toLocaleString() + ' machines. Searched only while this is on.';
+// Back to the last search (and the place on the page) when the app is opened again within the hour.
+const last = loadJ('xdf-last');
+if (last && typeof last.q === 'string' && Date.now() - (+last.t || 0) < 3600e3 && (last.q.trim().length >= 2 || (last.f && last.f !== 'all'))){
+  $q.value = last.q;
+  if (FNAME[last.f] && (last.f !== 'eq' || OPT.mach)) setFilter(last.f);
+  shown = Math.min(Math.max(50, +last.n || 50), 450);
+  restoreY = Math.max(0, +last.y || 0);
+  ['touchstart', 'wheel', 'keydown', 'mousedown'].forEach(ev =>
+    window.addEventListener(ev, () => { restoreY = null; }, {once: true, passive: true, capture: true}));
+}
+let scT;
+window.addEventListener('scroll', () => { clearTimeout(scT); scT = setTimeout(saveLast, 400); }, {passive: true});
+window.addEventListener('pagehide', saveLast);
 syncOpts();
+pill();
 render();
 eqListRender();
 bottom();
-if (!OTHER){ save('xdf-opt-other', null); try { caches.delete(OCACHE).catch(() => {}); } catch(_) {} }
-else if (OPT.other) setOther(true);
+if (!OTHER) save('xdf-opt-other', null);
+else if (WANT) setOther(true);
 else otherPrefetch();
 })();
 (function offlineStatus(){
@@ -855,7 +1425,7 @@ else otherPrefetch();
     (window.xdfOfflineRefresh = () => set('warn', 'Offline use is not available in this browser.'))();
     return;
   }
-  let updateReady = false, hadController = !!navigator.serviceWorker.controller;
+  let updateReady = false, hadController = !!navigator.serviceWorker.controller, reg = null, since = Date.now(), failed = false;
   const count = () => (window.xdfMain ? 'All ' + window.xdfMain + ' are' : 'All data is');
   async function cached(){
     try { return !!(await caches.match('./index.html', {ignoreSearch: true}) && await caches.match('./icon-192.png')); }
@@ -866,20 +1436,33 @@ else otherPrefetch();
     const upd = updateReady ? '<span class="upd">Update downloaded. Close the app fully and open it again to use it.</span>' : '';
     if (ok) set('ok', '✓ Available offline. ' + count() + ' stored on this device.' +
       (navigator.onLine ? '' : ' You are offline now, using the stored copy.') + upd);
-    else set('', (navigator.onLine ? 'Downloading for offline use…' : 'Not yet stored for offline use. Connect to the internet once.') + upd);
+    else if (!navigator.onLine) set('', 'Not yet stored for offline use. Connect to the internet once.' + upd);
+    else if (failed) set('warn', 'Offline use could not be set up in this browser.' + upd);
+    else if (Date.now() - since < 60000) set('', 'Downloading for offline use…' + upd);
+    else set('warn', 'Not stored for offline use yet. Open the app again with a good signal.' + upd);
     return ok;
   }
   window.xdfOfflineRefresh = refresh;
-  navigator.serviceWorker.register('sw.js').then(reg => {
-    const watch = w => { if (w) w.addEventListener('statechange', () => { if (w.state === 'activated') refresh(); }); };
-    watch(reg.installing);
-    reg.addEventListener('updatefound', () => watch(reg.installing));
-  }).catch(() => set('warn', 'Offline use could not be set up in this browser.'));
+  const watch = w => { if (w) w.addEventListener('statechange', () => { if (w.state === 'activated' || w.state === 'redundant') refresh(); }); };
+  // Asks the browser to store the app. Called again while the app is not stored yet (a download that broke
+  // off on a weak signal is started again), so the "Downloading…" line cannot stay there for ever.
+  function register(){
+    navigator.serviceWorker.register('sw.js').then(r => {
+      failed = false;
+      if (reg !== r){ reg = r; watch(r.installing); r.addEventListener('updatefound', () => watch(r.installing)); }
+      else if (!r.installing && !r.waiting && !r.active) r.update().catch(() => {});
+    }).catch(e => { if (e && e.name === 'SecurityError'){ failed = true; refresh(); } });      // anything else is the signal: tried again below
+  }
+  register();
   navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController) updateReady = true; hadController = true; refresh(); });
-  window.addEventListener('online', refresh);
+  window.addEventListener('online', async () => { since = Date.now(); if (!(await refresh())) register(); });
   window.addEventListener('offline', refresh);
   let tries = 0;
-  const timer = setInterval(async () => { if (await refresh() || ++tries > 40) clearInterval(timer); }, 1500);
+  const timer = setInterval(async () => {
+    if (await refresh()) return clearInterval(timer);
+    if (++tries % 20 === 0 && navigator.onLine) register();      // every 30 seconds while it is not stored
+    if (tries > 400) clearInterval(timer);
+  }, 1500);
   refresh();
 })();
 </script>
