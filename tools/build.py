@@ -11,6 +11,8 @@ Usage:
   YARD_50043141.md                YARD_50043141_accessories_spares_tools_OCR.md
   sap/SAP_XREF_OE_full.tsv        from artifact "Al Reef SAP Reference Files", files/xref/ (OE no. -> SAP no.)
   sap/SAP_XREF_other_maker_nos.tsv  same artifact (CMD / WinGD ID / maker no. -> SAP no.)
+  sap/bom_81N3_full_export.tsv    same artifact, files/exports/ (the full SAP equipment BOM export:
+                                  main engine equipment under other names, MPN column, equipment names)
   pages/p*.txt                    page maps made from "Split - 100 pages/text" SPC files:
                                   "=== <PDF page> | <printed page>" then the OE numbers on that page
 
@@ -279,6 +281,48 @@ for row, sap, desc in sap_rows('SAP_XREF_other_maker_nos.tsv'):
         continue
     k = {'CMD yard no.': 1, 'WinGD ID no.': 2, 'maker no.': 3}.get(kind, 4)
     saprecs.append([k, mk if k != 4 else '', sap, desc])
+# ---------- Main engine equipment in the SAP BOM export that the cross-reference tables left out ----------
+# sap/bom_81N3_full_export.tsv is the full export ("EXPORT 81N3 ALL SPARES WITH NUMBERS.xlsx" as text).
+# Scope: the engine's own functional location, plus every equipment SAP names as main engine or iCER
+# ("ME1 ...", "ME ...", "M/E ...", "MAIN ENGINE ...", "ICER ..."). From it come: the materials the
+# cross-reference tables do not list, the maker no. SAP keeps in its second column (MPN) when the first
+# is empty, and the SAP equipment name of every "other SAP" entry (shown as its system).
+ME_NAME = re.compile(r'(^|[^A-Z])(ME[12]?|M/E|ICER)([^A-Z]|$)|MAIN ENGINE')
+def me_scope(name, floc):
+    return floc.startswith('A-LS-REEF-0600-010') or bool(ME_NAME.search(name.upper()))
+have = {s[0] for l in oesap.values() for s in l} | {s[0] for l in cmdsap.values() for s in l} | {r[2] for r in saprecs}
+bom_eq, bom_mk, bom_new, bom_scope = {}, {}, {}, set()
+with open(RAW / 'sap' / 'bom_81N3_full_export.tsv', encoding='utf-8', newline='') as fh:
+    for row in csv.DictReader(fh, delimiter='\t'):
+        name = ' '.join(row['Object Description'].split())
+        if not me_scope(name, row['Functional Location']):
+            continue
+        sap = row['Component/Material No.'].strip()
+        if not re.fullmatch(r'\d{12}', sap):
+            warn.append(f'odd SAP no. in BOM export: {sap!r} on {name}')
+            continue
+        bom_scope.add(sap)
+        eqs = bom_eq.setdefault(sap, [])
+        if name not in eqs:
+            eqs.append(name)
+        mk = row['Manufacturer Part (HERS)'].strip() or row['Manufacturer Part No. (MPN)'].strip()
+        if mk:
+            bom_mk.setdefault(sap, mk)
+        if sap not in have:
+            bom_new.setdefault(sap, row['Material Description'].strip())
+mpn_filled = 0
+for r in saprecs:
+    if r[0] == 4 and bom_mk.get(r[2]):           # SAP has the maker no. in the MPN column
+        r[0], r[1] = 3, bom_mk[r[2]]
+        mpn_filled += 1
+    r.append(bom_eq.get(r[2], []))
+for sap, desc in bom_new.items():
+    mk = bom_mk.get(sap, '')
+    saprecs.append([3 if mk else 4, mk, sap, desc, bom_eq[sap]])
+have |= set(bom_new)
+print(f'BOM export: {len(bom_scope)} main engine SAP nos. in scope on {len({e for v in bom_eq.values() for e in v})} equipment; '
+      f'{len(bom_new)} added; {mpn_filled} maker nos. filled from the MPN column; '
+      f'{len(bom_scope - have)} still missing from the app')
 print(f'SAP: {len(oesap)} catalogue part nos. have a SAP no. ({sum(1 for r in spc if r[2] in oesap)} of {len(spc)} rows), '
       f'{sum(1 for v in oesap.values() if len(v) > 1)} with several SAP materials; '
       f'{len(cmdsap)} CMD yard nos. linked; {len(saprecs)} other SAP entries '

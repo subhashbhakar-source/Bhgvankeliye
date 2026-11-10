@@ -221,7 +221,7 @@ if (window.xdfOfflineRefresh) window.xdfOfflineRefresh();
 // spc:   [chapterIdx, pos, oe, qty, level, name, remark, kg, assembly, pdfPage, printedPage]
 // tools: [groupItem, cmd, drawing, description, qty, kg, page]
 // pages: [listIdx, page, title, [lines], [cmd numbers], systemIdx or -1]
-// oesap / cmdsap: {OE or CMD no.: [[SAP no., SAP description], ...]}   saprecs: [kindIdx, maker no., SAP no., SAP description]
+// oesap / cmdsap: {OE or CMD no.: [[SAP no., SAP description], ...]}   saprecs: [kindIdx, maker no., SAP no., SAP description, [SAP equipment names]]
 const CH = D.chapters, LISTS = D.lists, SYS = D.systems || [], rows = [];
 const OESAP = D.oesap || {}, CMDSAP = D.cmdsap || {}, SAPK = D.sapkinds || [];
 for (const r of D.spc){ const c = CH[r[0]];
@@ -235,7 +235,7 @@ for (const s of (D.specials || []))
   rows.unshift({t:'special', tag:s.tag, name:s.title, sub:s.subtitle, oe:s.oe, parker:s.parker, label:s.label,
     details:s.details || [], manual:s.manual, sap:s.sap || [], extra:s.search || '', photo:s.photo || '', cap:s.photo_caption || ''});
 for (const r of (D.saprecs || []))
-  rows.push({t:'sap', k:r[0], kind:SAPK[r[0]], mk:r[1], sapno:r[2], name:r[3]});
+  rows.push({t:'sap', k:r[0], kind:SAPK[r[0]], mk:r[1], sapno:r[2], name:r[3], eq:r[4] || []});
 
 const norm = s => String(s == null ? '' : s).toLowerCase();
 const squash = s => norm(s).replace(/[^a-z0-9一-鿿]/g, '');
@@ -252,7 +252,7 @@ for (const r of rows){
   else if (r.t === 'tool') parts = [r.cmd, r.dwg, r.name, r.gi, 'tool tools 50043150', sapTxt(r.sap)];
   else if (r.t === 'page') parts = [r.title, r.lines.join(' '), r.cmds.join(' '), r.list.id, r.cmds.map(n => sapTxt(CMDSAP[n] || [])).join(' ')];
   else if (r.t === 'special') parts = [r.name, r.sub, r.oe, r.parker, r.label, r.label.replace(/\s+/g, ''), r.details.join(' '), r.manual, sapTxt(r.sap), r.extra, r.tag];
-  else parts = [r.mk, r.sapno, r.name, r.kind];
+  else parts = [r.mk, r.sapno, r.name, r.kind, r.eq.join(' ')];
   r.hay = norm(parts.join(' | '));
   r.hayS = squash(parts.join(''));
 }
@@ -372,7 +372,10 @@ function card(r, toks, exact){
     const lbl = ['OE part no.', 'CMD yard no.', 'WinGD ID no.', 'Maker no.', ''][r.k] || 'Maker no.';
     return top + '<div class="src">' + esc(r.kind) + '</div>' +
       (r.mk ? '<div class="ids">' + chip(lbl, r.mk, '', toks) + '</div>' : '') +
-      (r.k === 0 ? '<div class="fields">' + field('Manual', '<span class="sub">This OE no. is not in the X72DF-2.1 Spare Parts Catalogue.</span>') + '</div>' : '') +
+      ((r.eq.length || r.k === 0) ? '<div class="fields">' +
+        (r.eq.length ? field('System', r.eq.map(x => '<div><b>' + h(x) + '</b></div>').join('')) : '') +
+        (r.k === 0 ? field('Manual', '<span class="sub">This OE no. is not in the X72DF-2.1 Spare Parts Catalogue.</span>') : '') +
+      '</div>' : '') +
       sapSection([[r.sapno, r.name]], toks) +
     '</div>';
   }

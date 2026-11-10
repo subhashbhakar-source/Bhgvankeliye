@@ -5,7 +5,7 @@ An iPhone-friendly web app (PWA) for searching the WinGD X72DF-2.1 spare parts o
 - **WinGD Spare Parts Catalogue** (Issue 001, 2022-08): 2,910 rows. Each shows the part name as printed, the OE part number, the system (catalogue chapter and group), the exact catalogue page and PDF page, position, quantity and weight.
 - **CMD / Jiangnan yard lists**: 50043150 tools (404 rows with CMD material and drawing numbers), 50043149 engine spares (per PDF page) and 50043141 accessories spares and tools (OCR text per PDF page).
 
-- **SAP material numbers** (plant 81N3 equipment BOM, cross-referenced 5 Nov 2026): shown next to the OE or CMD number with the SAP name, and searchable both ways. Parts with several SAP materials carry a warning; parts not on the BOM say so. Other SAP items (maker, sub-supplier and WinGD ID numbers) are searchable too.
+- **SAP material numbers** (plant 81N3 equipment BOM, cross-referenced 5 Nov 2026): shown next to the OE or CMD number with the SAP name, and searchable both ways. Parts with several SAP materials carry a warning; parts not on the BOM say so. Other SAP items (maker, sub-supplier and WinGD ID numbers) are searchable too, each with its SAP equipment name as the system. They cover every equipment the SAP BOM export names as main engine or iCER (ME1, ME, M/E, MAIN ENGINE, ICER), including the exhaust gas boiler, iCER system, FO pilot and supply pumps and the AutoChief M/E interface unit.
 
 - **Frequent orders** are pinned at the top of the start screen and always listed first in search. They are defined in `tools/specials.json` (title, OE no., Parker or maker no., label code, notes); the SAP no. is looked up from the SAP table by OE no. at build time.
 
