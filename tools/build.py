@@ -302,7 +302,8 @@ ME_NAME = re.compile(r'(^|[^A-Z])(ME[12]?|M/E|ICER)([^A-Z]|$)|MAIN ENGINE')
 def me_scope(name, floc):
     return floc.startswith('A-LS-REEF-0600-010') or bool(ME_NAME.search(name.upper()))
 clean = lambda s: re.sub(r'[^A-Z0-9]', '', s.upper())
-bom = []    # (main engine scope?, equipment no., equipment name, BOM no., item no., SAP no., description, maker no., second maker no.)
+bom = []    # (main engine scope?, equipment no., equipment name, BOM no., item no., SAP no., description, maker no., second maker no.,
+            #  technical ID = the machinery code such as REEF-601-016-71, functional location such as A-LS-REEF-0600-010)
 with open(RAW / 'sap' / 'bom_81N3_full_export.tsv', encoding='utf-8', newline='') as fh:
     for row in csv.DictReader(fh, delimiter='\t'):
         name = ' '.join(row['Object Description'].split())
@@ -315,13 +316,14 @@ with open(RAW / 'sap' / 'bom_81N3_full_export.tsv', encoding='utf-8', newline=''
         hers, mpn = row['Manufacturer Part (HERS)'].strip(), row['Manufacturer Part No. (MPN)'].strip()
         bom.append((me_scope(name, row['Functional Location']), row['Equipment'].strip(), name, row['BOM Number'].strip(),
                     int(item), sap, row['Material Description'].strip(), hers or mpn,
-                    mpn if hers and mpn and clean(hers) != clean(mpn) else ''))
+                    mpn if hers and mpn and clean(hers) != clean(mpn) else '',
+                    row['Technical ID'].strip(), row['Functional Location'].strip()))
 
 # Main engine: the materials the cross-reference tables do not list, the maker no. SAP keeps in its second
 # column (MPN) when the first is empty, and the SAP equipment name of every "other SAP" entry (its system).
 have = {s[0] for l in oesap.values() for s in l} | {s[0] for l in cmdsap.values() for s in l} | {r[2] for r in saprecs}
 bom_eq, bom_mk, bom_mk2, bom_new, bom_scope = {}, {}, {}, {}, set()
-for me, eqno, name, bomno, item, sap, desc, mk, mk2 in bom:
+for me, eqno, name, bomno, item, sap, desc, mk, mk2, tech, floc in bom:
     if not me:
         continue
     if mk2:
@@ -349,14 +351,15 @@ print(f'BOM export: {len(bom)} lines; main engine: {len(bom_scope)} SAP nos. on 
       f'{len(bom_scope - have)} still missing from the app')
 
 def machines(lines, ref):
-    """[[equipment no., name, BOM no., [item no., ref, item no., ref, ...]]]: equipment in file order, items by item no."""
+    """[[equipment no., name, BOM no., [item no., ref, item no., ref, ...], technical ID, functional location]]:
+    equipment in file order, items by item no."""
     order, by = [], {}
-    for me, eqno, name, bomno, item, sap, desc, mk, mk2 in lines:
+    for me, eqno, name, bomno, item, sap, desc, mk, mk2, tech, floc in lines:
         if eqno not in by:
-            by[eqno] = [eqno, name, bomno, []]
+            by[eqno] = [eqno, name, bomno, [], tech, floc]
             order.append(eqno)
-        elif by[eqno][1] != name or by[eqno][2] != bomno:
-            warn.append(f'equipment {eqno} has two names or BOM numbers')
+        elif by[eqno][1] != name or by[eqno][2] != bomno or by[eqno][4] != tech or by[eqno][5] != floc:
+            warn.append(f'equipment {eqno} has two names, BOM numbers, technical IDs or functional locations')
         by[eqno][3].append((item, ref(sap)))
     for e in by.values():
         if len({i for i, _ in e[3]}) != len(e[3]):
@@ -372,7 +375,7 @@ other = None
 if CFG['other_machinery']:
     ol = [l for l in bom if not l[0]]
     mats = {}
-    for me, eqno, name, bomno, item, sap, desc, mk, mk2 in ol:
+    for me, eqno, name, bomno, item, sap, desc, mk, mk2, tech, floc in ol:
         m = mats.setdefault(sap, [sap, desc, mk, mk2])
         if m[1] != desc:
             warn.append(f'material {sap} has two descriptions')

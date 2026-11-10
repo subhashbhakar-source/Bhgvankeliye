@@ -14,6 +14,8 @@ An iPhone-friendly web app (PWA) for searching the WinGD X72DF-2.1 spare parts o
 - **Other machinery** (switch, off by default): the rest of the ship from the same SAP BOM export, 355 machines with 15,622 parts-list lines (generators, compressors, cargo and deck machinery and so on). It is searched only while the switch is on. The data sits in its own encrypted file, `docs/other-<hash>.dat`, which the phone stores once and downloads again only when that data changes.
 - **Machinery view** (switch, off by default): adds a **Machines** list, each machine's parts list, and on every part the line *Equipment → BOM → Item no. → Material no.*, with the plain-word meaning of the four names at the bottom of the page.
 
+- **SAP equipment and their codes**: a collapsible list at the bottom of the page. For each machine it shows the Technical ID (the machine's code on board, e.g. `REEF-601-016-71`), the SAP equipment no., the BOM no., the functional location and how many parts are in its list. It lists the 74 main engine machines, plus the 355 others while the Other machinery switch is on, and has its own filter box. It belongs to the machinery view option in `tools/config.json`.
+
 With both switches off the app shows the main engine only. It works offline once it is installed. Tap any number to copy it. The bottom of the page says what is stored on the phone and when the page was last updated.
 
 ## Privacy

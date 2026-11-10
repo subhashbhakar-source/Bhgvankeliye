@@ -18,21 +18,21 @@
   --bg:#f4f6f8; --card:#ffffff; --ink:#0f1720; --muted:#5b6672; --line:#dde3e9;
   --accent:#0b6bcb; --accent-ink:#ffffff; --chip:#eaf1fa; --sap:#0a7a45; --sap-bg:#e6f5ec;
   --warn:#8a4b00; --warn-bg:#fbefdf; --hl:#fff2a8; --err:#b42318;
-  --scrim:rgba(0,0,0,.86); --track:#aeb9c4; --knob:#ffffff;
+  --scrim:rgba(0,0,0,.86); --track:#aeb9c4; --knob:#ffffff; --sapsec:#dcecfd; --saph:#0b57a4;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#0f1720; --card:#17212c; --ink:#e8edf2; --muted:#93a1af; --line:#263342;
     --accent:#4ea3ff; --accent-ink:#06121f; --chip:#1d2b3a; --sap:#5fd49a; --sap-bg:#123326;
-    --warn:#ffb866; --warn-bg:#3a2a14; --hl:#5c4d00; --err:#ff8a80; --track:#3d4d60; --knob:#e8edf2;
+    --warn:#ffb866; --warn-bg:#3a2a14; --hl:#5c4d00; --err:#ff8a80; --track:#3d4d60; --knob:#e8edf2; --sapsec:#cfe4fb; --saph:#0b57a4;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"]{
   --bg:#0f1720; --card:#17212c; --ink:#e8edf2; --muted:#93a1af; --line:#263342;
   --accent:#4ea3ff; --accent-ink:#06121f; --chip:#1d2b3a; --sap:#5fd49a; --sap-bg:#123326;
-  --warn:#ffb866; --warn-bg:#3a2a14; --hl:#5c4d00; --err:#ff8a80; --track:#3d4d60; --knob:#e8edf2;
+  --warn:#ffb866; --warn-bg:#3a2a14; --hl:#5c4d00; --err:#ff8a80; --track:#3d4d60; --knob:#e8edf2; --sapsec:#cfe4fb; --saph:#0b57a4;
   color-scheme: dark;
 }
 *{box-sizing:border-box}
@@ -77,8 +77,14 @@ main{padding-block:10px calc(env(safe-area-inset-bottom, 0px) + 24px);max-width:
 .fv{min-width:0;word-break:break-word}
 .sub{color:var(--muted);font-size:12px}
 .card.exact{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
-.sapsec{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
-.saph{font-size:11px;font-weight:650;text-transform:uppercase;letter-spacing:.06em;color:var(--sap);margin-bottom:2px}
+.sapsec{margin-top:12px;padding:10px 12px 12px;border-radius:10px;background:var(--sapsec);color:var(--ink)}
+/* the SAP section is light blue in dark mode too, so inside it the light colours apply */
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .sapsec{--ink:#0f1720; --muted:#4b5764; --card:#ffffff; --chip:#eef4fb; --line:#b9cde3; --accent:#0b57a4; --sap:#0a6b3d; --sap-bg:#d9f2e3; --warn:#7a4200; --warn-bg:#fde9cf; --hl:#ffe680}
+}
+:root[data-theme="dark"] .sapsec{--ink:#0f1720; --muted:#4b5764; --card:#ffffff; --chip:#eef4fb; --line:#b9cde3; --accent:#0b57a4; --sap:#0a6b3d; --sap-bg:#d9f2e3; --warn:#7a4200; --warn-bg:#fde9cf; --hl:#ffe680}
+.saph{font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--saph);margin-bottom:2px}
+.sapsec .id:not(.sap),.sapsec .chn{background:var(--card)}
 .saprow{display:flex;flex-direction:column;gap:5px;margin-top:8px}
 .pair{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch}
 .pair .id{min-width:0;overflow-wrap:anywhere}
@@ -154,6 +160,19 @@ footer{color:var(--muted);font-size:11px;text-align:center;padding-block:8px 6px
 .lgr{display:grid;grid-template-columns:8.4em minmax(0,1fr);gap:8px}
 .offl .xl{display:block;color:var(--muted);font-weight:400;margin-top:3px}
 .offl .xl.ok{color:var(--sap);font-weight:600}
+.eqlist{max-width:760px;margin:4px auto 8px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);font-size:14px}
+.eqlist summary{font-size:15px;font-weight:650;color:var(--ink);cursor:pointer}
+.eqlist input{width:100%;margin-top:10px;font-size:16px;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);outline:none;-webkit-appearance:none;appearance:none}
+.eqlist input:focus{border-color:var(--accent)}
+.eqhelp{color:var(--muted);font-size:12.5px;line-height:1.45;margin-top:8px}
+.eqg{font-size:11px;font-weight:650;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 0}
+.eqr{padding:9px 0;border-top:1px solid var(--line)}
+.eqg + .eqr{border-top:0}
+.eqn{font-weight:650;word-break:break-word}
+.eqr .ids{margin-top:6px}
+.eqr .id{font-size:13px;padding:5px 8px}
+.eqm{color:var(--muted);font-size:12px;margin-top:5px;word-break:break-word}
+.eqm b{color:var(--ink);font-weight:600}
 </style>
 </head>
 <body>
@@ -191,6 +210,12 @@ footer{color:var(--muted);font-size:11px;text-align:center;padding-block:8px 6px
     <div id="status" aria-live="polite"></div>
   </header>
   <main id="out"></main>
+  <details id="eqlist" class="eqlist" hidden>
+    <summary id="eqsum">SAP equipment and their codes</summary>
+    <div class="eqhelp"><b>Technical ID</b> is the machine's code on board. <b>Equipment no.</b> is SAP's own number for the same machine. <b>BOM no.</b> is its parts list. Tap a code to copy it.</div>
+    <input id="eqf" type="search" placeholder="Filter by name or code" aria-label="Filter the equipment list" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+    <div id="eqrows"></div>
+  </details>
   <div id="legend" class="legend" hidden>
     <div class="lgh">How SAP lists machinery</div>
     <div class="lgr"><b>Equipment</b><span>the machine</span></div>
@@ -336,7 +361,7 @@ function index(r){
   else if (r.t === 'tool') parts = [r.cmd, r.dwg, r.name, r.gi, 'tool tools 50043150', sapTxt(r.sap)];
   else if (r.t === 'page') parts = [r.title, r.lines.join(' '), r.cmds.join(' '), r.list.id, r.cmds.map(n => sapTxt(CMDSAP[n] || [])).join(' ')];
   else if (r.t === 'special') parts = [r.name, r.sub, r.oe, r.parker, r.label, r.label.replace(/\s+/g, ''), r.details.join(' '), r.manual, sapTxt(r.sap), r.extra, r.tag];
-  else if (r.t === 'eq') parts = [r.name, r.no, r.bom, 'machine equipment'];
+  else if (r.t === 'eq') parts = [r.name, r.tech, r.no, r.bom, r.floc, 'machine equipment'];
   else parts = [r.mk, r.sapno, r.name, r.kind, r.eq.join(' '), mkTxt(r.sapno)];
   r.hay = norm(parts.join(' | '));
   r.hayB = squashB(r.hay);
@@ -347,7 +372,8 @@ rows.forEach(index);
 const MAIN_N = rows.length;
 
 // ---------- machinery: equipment (the machine) -> BOM (its parts list) -> item no. -> material no. ----------
-// D.mach: [[equipment no., name, BOM no., [item no., SAP no., item no., SAP no., ...]]] for the main engine.
+// D.mach: [[equipment no., name, BOM no., [item no., SAP no., item no., SAP no., ...], technical ID, functional location]]
+// for the main engine. The technical ID (REEF-601-016-71) is the machine's code on board.
 // Other machinery has the same shape in its own file (see loadOther), with material indexes in place of SAP nos.
 const HAS_MACH = !!D.mach, OTHER = (D.meta && D.meta.other) || null;
 const OPT = {other: !!OTHER && load('xdf-opt-other') === '1', mach: HAS_MACH && load('xdf-opt-mach') === '1'};
@@ -359,7 +385,7 @@ for (const r of (D.saprecs || [])) SAPINFO.set(r[2], [r[3], r[1]]);
 for (const s of (D.specials || [])) for (const x of (s.sap || [])) SAPINFO.set(x[0], [x[1], s.oe]);
 function addMachines(list, other, sapOf){
   for (const m of list){
-    const e = {t:'eq', idx:EQS.length, no:m[0], name:m[1], bom:m[2], other, items:[]};
+    const e = {t:'eq', idx:EQS.length, no:m[0], name:m[1], bom:m[2], tech:m[4] || '', floc:m[5] || '', other, items:[]};
     for (let i = 0; i < m[3].length; i += 2){
       const sap = sapOf(m[3][i + 1]);
       e.items.push([m[3][i], sap]);
@@ -420,7 +446,7 @@ function search(q){
       if (r.cmd === t || (r.cmds && r.cmds.indexOf(t) >= 0)) score += 60;
       if (hasSap(r, t) || (r.mk && squash(r.mk) === st) || mkExact(r, st)) score += 60;
       if (r.parker && (squash(r.parker) === st || squash(r.label.replace(/\s*ELEMENT$/i, '')) === st)) score += 60;
-      if (r.t === 'eq' && (r.no === t || r.bom === t)) score += 60;
+      if (r.t === 'eq' && (r.no === t || r.bom === t || norm(r.tech) === t)) score += 60;
       if ((r.grp && r.grp === t) || (r.gi && r.gi.indexOf(t) === 0)) score += 6;
       if (r.name){
         const nm = norm(r.name);
@@ -441,7 +467,8 @@ function sysName(s){ return s ? '<b>' + esc(s[1]) + '</b> <span class="sub">(cha
 const NOSAP = 'Not on the SAP equipment BOM. Search SAP (MM60 / Fiori) with the part no. and name.';
 const brk = s => s.replace(/,/g, ',<wbr>');
 function chainOne(x, sap){
-  return '<div class="chn"><b>' + esc(x[0].name) + '</b>' + (x[0].other ? ' <span class="sub">other machinery</span>' : '') +
+  return '<div class="chn"><b>' + esc(x[0].name) + '</b>' + (x[0].tech ? ' <span class="sub">' + esc(x[0].tech) + '</span>' : '') +
+    (x[0].other ? ' <span class="sub">· other machinery</span>' : '') +
     '<div class="chl"><i>Equipment <b>' + x[0].no + '</b></i> → <i>BOM <b>' + x[0].bom + '</b></i> → <i>Item no. <b>' + pad4(x[1]) +
     '</b></i> → <i>Material no. <b>' + sap + '</b></i></div></div>';
 }
@@ -524,7 +551,8 @@ function card(r, toks, exact){
       '<div class="tag mtag">Machine</div>' +
       '<div class="src">SAP equipment · ' + (r.other ? 'other machinery' : 'main engine') + '</div>' +
       '<div class="name">' + h(r.name) + '</div>' +
-      '<div class="ids">' + chip('Equipment no.', r.no, '', toks) + chip('BOM no.', r.bom, '', toks) + '</div>' +
+      '<div class="ids">' + (r.tech ? chip('Technical ID', r.tech, '', toks) : '') + chip('Equipment no.', r.no, '', toks) + chip('BOM no.', r.bom, '', toks) + '</div>' +
+      (r.floc ? '<div class="rem">Functional location ' + h(r.floc) + '</div>' : '') +
       '<details class="bom" data-eq="' + r.idx + '"><summary>Parts list (BOM): ' + r.items.length.toLocaleString() +
         (r.items.length === 1 ? ' item' : ' items') + '</summary><div class="bomrows"></div></details>' +
     '</div>';
@@ -594,7 +622,7 @@ function render(){
   const qs = squash(q), qt = q.trim();
   const isExact = r => (r.oe && squash(r.oe) === qs) || r.cmd === qt || (r.cmds && r.cmds.indexOf(qt) >= 0) ||
     hasSap(r, qt) || (r.mk && squash(r.mk) === qs) || mkExact(r, qs) || (r.parker && (squash(r.parker) === qs || squash(r.label.replace(/\s*ELEMENT$/i, '')) === qs)) ||
-    (r.t === 'eq' && (r.no === qt || r.bom === qt));
+    (r.t === 'eq' && (r.no === qt || r.bom === qt || norm(r.tech) === norm(qt)));
   $out.innerHTML = res.slice(0, shown).map(r => card(r, toks, isExact(r))).join('') + (res.length > shown ? moreBtn(res.length - shown) : '');
 }
 function setFilter(f){
@@ -637,12 +665,42 @@ $out.addEventListener('click', e => {
   if (ex){ $q.value = ex.dataset.ex; shown = 50; render(); return; }
   const g = e.target.closest('[data-goto]');
   if (g){ setFilter('yard'); $q.value = g.dataset.goto; shown = 50; render(); window.scrollTo(0, 0); return; }
+  copyTap(e);
+});
+function copyTap(e){
   const b = e.target.closest('[data-copy]');
   if (!b) return;
   const v = b.dataset.copy, done = () => toast('Copied ' + v);
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(done, () => fallback(v, done));
   else fallback(v, done);
-});
+}
+
+// ---------- bottom of the page: the list of SAP equipment with their codes ----------
+function eqListRender(){
+  const rank = e => e.other ? 2 : /^REEF-60[12]-/.test(e.tech) ? 0 : 1;      // REEF-601 / 602 = the main engines themselves
+  const box = $('eqlist'), list = EQS.filter(e => OPT.other || !e.other);
+  box.hidden = !list.length;
+  $('eqsum').textContent = 'SAP equipment and their codes (' + list.length.toLocaleString() + ')';
+  if (!box.open) return;
+  const toks = norm($('eqf').value).split(/\s+/).filter(Boolean);
+  const show = list.filter(e => toks.every(t => e.hay.indexOf(t) >= 0))
+    .sort((a, b) => (rank(a) - rank(b)) || (a.tech < b.tech ? -1 : a.tech > b.tech ? 1 : 0));
+  let h = '', grp = null;
+  for (const e of show){
+    if (e.other !== grp){
+      grp = e.other;
+      h += '<div class="eqg">' + (grp ? 'Other machinery' : 'Main engine') + ' · ' + show.filter(x => x.other === grp).length.toLocaleString() + '</div>';
+    }
+    h += '<div class="eqr"><div class="eqn">' + esc(e.name) + '</div><div class="ids">' +
+      (e.tech ? chip('Technical ID', e.tech, '', []) : '') + chip('Equipment no.', e.no, '', []) + chip('BOM no.', e.bom, '', []) + '</div>' +
+      '<div class="eqm">' + (e.floc ? 'Functional location <b>' + esc(e.floc) + '</b> · ' : '') +
+        e.items.length.toLocaleString() + (e.items.length === 1 ? ' part' : ' parts') + ' in its list</div></div>';
+  }
+  $('eqrows').innerHTML = h || '<div class="eqm">No equipment matches.</div>';
+}
+$('eqlist').addEventListener('toggle', eqListRender);
+$('eqf').addEventListener('input', eqListRender);
+$('eqrows').addEventListener('click', copyTap);
 $('zoom').addEventListener('click', () => { $('zoom').hidden = true; });
 $('foot').addEventListener('click', e => {
   if (e.target.id === 'forget'){ save(KEYNAME, null); toast('Access code forgotten'); setTimeout(() => location.reload(), 600); }
@@ -680,7 +738,7 @@ async function setOther(on){
   }
   OPT.other = on;
   save('xdf-opt-other', on ? '1' : null);
-  syncOpts(); shown = 50; render(); bottom();
+  syncOpts(); shown = 50; render(); eqListRender(); bottom();
 }
 
 // ---------- other machinery: its own encrypted file, kept in its own cache ----------
@@ -780,6 +838,7 @@ $('optOther').hidden = !OTHER;
 $('optMach').hidden = !HAS_MACH;
 syncOpts();
 render();
+eqListRender();
 bottom();
 if (!OTHER){ save('xdf-opt-other', null); try { caches.delete(OCACHE).catch(() => {}); } catch(_) {} }
 else if (OPT.other) setOther(true);
