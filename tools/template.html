@@ -373,7 +373,7 @@ const MAIN_N = rows.length;
 
 // ---------- machinery: equipment (the machine) -> BOM (its parts list) -> item no. -> material no. ----------
 // D.mach: [[equipment no., name, BOM no., [item no., SAP no., item no., SAP no., ...], technical ID, functional location]]
-// for the main engine. The technical ID (REEF-601-016-71) is the machine's code on board.
+// for the main engine. The technical ID (REEF-nnn-nnn-nn) is the machine's code on board.
 // Other machinery has the same shape in its own file (see loadOther), with material indexes in place of SAP nos.
 const HAS_MACH = !!D.mach, OTHER = (D.meta && D.meta.other) || null;
 const OPT = {other: !!OTHER && load('xdf-opt-other') === '1', mach: HAS_MACH && load('xdf-opt-mach') === '1'};

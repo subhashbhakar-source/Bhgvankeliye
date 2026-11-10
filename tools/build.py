@@ -303,7 +303,7 @@ def me_scope(name, floc):
     return floc.startswith('A-LS-REEF-0600-010') or bool(ME_NAME.search(name.upper()))
 clean = lambda s: re.sub(r'[^A-Z0-9]', '', s.upper())
 bom = []    # (main engine scope?, equipment no., equipment name, BOM no., item no., SAP no., description, maker no., second maker no.,
-            #  technical ID = the machinery code such as REEF-601-016-71, functional location such as A-LS-REEF-0600-010)
+            #  technical ID = the machinery code REEF-nnn-nnn-nn, functional location A-LS-REEF-nnnn-nnn)
 with open(RAW / 'sap' / 'bom_81N3_full_export.tsv', encoding='utf-8', newline='') as fh:
     for row in csv.DictReader(fh, delimiter='\t'):
         name = ' '.join(row['Object Description'].split())
